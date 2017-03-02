@@ -18,10 +18,10 @@ classdef QPICData
     properties(GetAccess='public', SetAccess='private')
 
         Elements    = {};    % Struct of all datafiles in dataset
-        MSData      = {};    % Struct of all MS data
-        DataSets    = {};    % Available datasets in folders indicated by LocalConfig.m
+        SimData     = {};    % Struct of all simulation data
+        DataSets    = {};    % Available datasets in folders indicated by QPICSettings.m
         DefaultPath = {};    % Default data folder
-        Temp        = '';    % Temp folder (set in LocalConfig.m)
+        Temp        = '';    % Temp folder (set in QPICSettings.m)
         HasData     = false; % True if any data folder exists
         Consistent  = false; % True if all data folders have the same number of files
 
@@ -165,15 +165,15 @@ classdef QPICData
                 fprintf('Path is %s\n', obj.Path);
             end % if
             
-            % Scanning MS folder
+            % Scanning simulation folder
             obj.Elements = obj.fScanFolder;
-            obj.MSData   = obj.fScanElements;
+            obj.SimData  = obj.fScanElements;
 
-            % Set path in OsirisConfig object
+            % Set path in QPICConfig object
             obj.Config.Path = obj.Path;
             obj.HasData     = iHasData;
             
-            if mod(obj.MSData.MaxFiles,obj.MSData.MinFiles) == 0
+            if mod(obj.SimData.MaxFiles,obj.SimData.MinFiles) == 0
                obj.Consistent = true;
             else
                obj.Consistent = false;
@@ -252,7 +252,6 @@ classdef QPICData
                 return;
             end % if
             
-
             % Enforce upper case
             sType    = upper(sType);
             sSet     = upper(sSet);
@@ -279,9 +278,9 @@ classdef QPICData
             end % if
 
             % Extract path
-            iIndex    = obj.MSData.Index.(sType).(sSet).(sSpecies).(sSlice);
-            sFolder   = obj.MSData.Data(iIndex).Path;
-            iFiles    = obj.MSData.Data(iIndex).Files;
+            iIndex    = obj.SimData.Index.(sType).(sSet).(sSpecies).(sSlice);
+            sFolder   = obj.SimData.Data(iIndex).Path;
+            iFiles    = obj.SimData.Data(iIndex).Files;
             sTimeNExt = sprintf('%08d', iTime);
             sFile     = ['/',sFolder,'_',sTimeNExt,'.h5'];
             sLoad     = [obj.Path,'/',sFolder,sFile];
@@ -309,12 +308,12 @@ classdef QPICData
                 sSlice = 'All';
             end % if
 
-            [~,iMS] = size(obj.MSData.Data);
+            [~,iMS] = size(obj.SimData.Data);
             for m=1:iMS
-                if   strcmpi(obj.MSData.Data(m).Type, sType) ...
-                  && strcmpi(obj.MSData.Data(m).Set, sSet) ...
-                  && strcmpi(obj.MSData.Data(m).Species, sSpecies) ...
-                  && strcmpi(obj.MSData.Data(m).Slice, sSlice)
+                if   strcmpi(obj.SimData.Data(m).Type, sType) ...
+                  && strcmpi(obj.SimData.Data(m).Set, sSet) ...
+                  && strcmpi(obj.SimData.Data(m).Species, sSpecies) ...
+                  && strcmpi(obj.SimData.Data(m).Slice, sSlice)
                     bReturn = true;
                     return;
                 end % if
@@ -351,8 +350,7 @@ classdef QPICData
                 if numel(cElems) > 1
                     sDir = cElems{2};
                 else
-                    sDir = 'All'; % If there's no directions specified, assume it's for all directions
-                    fprintf('Folder %s\n',sName);
+                    sDir = 'All'; % If there are no directions specified, assume it's for all directions
                 end % if
 
                 subFiles = dir([obj.Path '/' sPath]);
