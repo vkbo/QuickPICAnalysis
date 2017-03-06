@@ -286,8 +286,8 @@ classdef QPICData
             sLoad     = [obj.Path,'/',sFolder,sFile];
             
             % Check if datafile exists
-            if iTime >= iFiles
-                fprintf(2, 'Error: Dump %d does not exist. Last dump is %d.\n', iTime, iFiles-1);
+            if iTime > iFiles
+                fprintf(2, 'Error: Dump %d does not exist. Last dump is %d.\n', iTime, iFiles);
                 return;
             end % if
 
