@@ -684,66 +684,79 @@ classdef QPICConfig
         
         function obj = fGetDiagVariables(obj)
             
+            cDF = {};
+            cDS = {};
+            
             %
-            % Field Diagnostics
+            % E-Field Diagnostics
             %
             
-            % E-field
+            % Dump
             try
-                iDumpE = int64(obj.Input.diagnostics.field_diag.dfe{1});
+                iDump      = int64(obj.Input.diagnostics.field_diag.dfe{1});
+                cDF{end+1} = 'EField';
             catch
-                iDumpE = 1;
+                iDump = 0;
             end % try
             
-            % E-field Slices
+            % Dump Slices
             try
-                iDumpESlice = int64(obj.Input.diagnostics.field_diag.dfeslice{1});
-                dEX0        = double(obj.Input.diagnostics.field_diag.ex0{1});
-                dEY0        = double(obj.Input.diagnostics.field_diag.ey0{1});
-                dEZ0        = double(obj.Input.diagnostics.field_diag.ez0{1});
-                aESlices    = [dEZ0 dEX0 dEY0];
+                iDumpSlice = int64(obj.Input.diagnostics.field_diag.dfeslice{1});
+                dX0        = double(obj.Input.diagnostics.field_diag.ex0{1});
+                dY0        = double(obj.Input.diagnostics.field_diag.ey0{1});
+                dZ0        = double(obj.Input.diagnostics.field_diag.ez0{1});
+                aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'EField';
             catch
-                iDumpESlice = 1;
-                aESlices    = [0 0 0];
-            end % try
-            
-            % B-field
-            try
-                iDumpB = int64(obj.Input.diagnostics.field_diag.dfb{1});
-            catch
-                iDumpB = 1;
-            end % try
-            
-            % B-field Slices
-            try
-                iDumpBSlice = int64(obj.Input.diagnostics.field_diag.dfeslice{1});
-                dBX0        = double(obj.Input.diagnostics.field_diag.bx0{1});
-                dBY0        = double(obj.Input.diagnostics.field_diag.by0{1});
-                dBZ0        = double(obj.Input.diagnostics.field_diag.bz0{1});
-                aBSlices    = [dEZ0 dEX0 dEY0];
-            catch
-                iDumpBSlice = 1;
-                aBSlices    = [0 0 0];
+                iDumpSlice = 0;
+                aSlices    = [0 0 0];
             end % try
             
             % Save Variables
-            obj.Diag.EField.Dump      = iDumpE;
-            obj.Diag.EField.DumpSlice = iDumpESlice;
-            obj.Diag.EField.Slices    = aESlices;
-            obj.Diag.BField.Dump      = iDumpB;
-            obj.Diag.BField.DumpSlice = iDumpBSlice;
-            obj.Diag.BField.Slices    = aBSlices;
+            obj.Diag.EField.Dump      = iDump;
+            obj.Diag.EField.DumpSlice = iDumpSlice;
+            obj.Diag.EField.Slices    = aSlices;
+
+            %
+            % B-Field Diagnostics
+            %
+
+            % Dump
+            try
+                iDump      = int64(obj.Input.diagnostics.field_diag.dfb{1});
+                cDF{end+1} = 'BField';
+            catch
+                iDump = 0;
+            end % try
             
+            % Dump Slices
+            try
+                iDumpSlice = int64(obj.Input.diagnostics.field_diag.dfeslice{1});
+                dX0        = double(obj.Input.diagnostics.field_diag.bx0{1});
+                dY0        = double(obj.Input.diagnostics.field_diag.by0{1});
+                dZ0        = double(obj.Input.diagnostics.field_diag.bz0{1});
+                aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'BField';
+            catch
+                iDumpSlice = 0;
+                aSlices    = [0 0 0];
+            end % try
             
+            % Save Variables
+            obj.Diag.BField.Dump      = iDump;
+            obj.Diag.BField.DumpSlice = iDumpSlice;
+            obj.Diag.BField.Slices    = aSlices;
+
             %
             % Beam Diagnostics
             %
             
             % Dump
             try
-                iDump = int64(obj.Input.diagnostics.beam_diag.dfqeb{1});
+                iDump      = int64(obj.Input.diagnostics.beam_diag.dfqeb{1});
+                cDF{end+1} = 'Beam';
             catch
-                iDump = 1;
+                iDump = 0;
             end % try
             
             % Slices
@@ -753,8 +766,9 @@ classdef QPICConfig
                 dY0        = double(obj.Input.diagnostics.beam_diag.qeby0{1});
                 dZ0        = double(obj.Input.diagnostics.beam_diag.qebz0{1});
                 aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'Beam';
             catch
-                iDumpSlice = 1;
+                iDumpSlice = 0;
                 aSlices    = [0 0 0];
             end % try
             
@@ -769,9 +783,10 @@ classdef QPICConfig
             
             % Dump
             try
-                iDump = int64(obj.Input.diagnostics.plasma_diag.dfqep{1});
+                iDump      = int64(obj.Input.diagnostics.plasma_diag.dfqep{1});
+                cDF{end+1} = 'Plasma';
             catch
-                iDump = 1;
+                iDump = 0;
             end % try
             
             % Slices
@@ -781,8 +796,9 @@ classdef QPICConfig
                 dY0        = double(obj.Input.diagnostics.plasma_diag.qepy0{1});
                 dZ0        = double(obj.Input.diagnostics.plasma_diag.qepz0{1});
                 aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'Plasma';
             catch
-                iDumpSlice = 1;
+                iDumpSlice = 0;
                 aSlices    = [0 0 0];
             end % try
             
@@ -791,489 +807,73 @@ classdef QPICConfig
             obj.Diag.Plasma.DumpSlice = iDumpSlice;
             obj.Diag.Plasma.Slices    = aSlices;
 
-        end % function
-
-        function stReturn = fGetParticleSpecies(obj, sRawName, stData, iType)
-            
-            stReturn = {};
-            iMoving  = 0; % 1 for moving particles in x1 direction
-            cType    = {'Species','Cathode','Neutral','NeutralMovIons'};
-
-            % Species Name
-            try
-                sName = stData.species.name{1};
-            catch
-                sName = sRawName;
-            end % try
-
-            vSpecies = obj.Translate.Lookup(sName);
-            sPName   = vSpecies.Name;
-            sPName   = strrep(sPName,' ','_');
-            sPName   = strrep(sPName,'-','_');
-
-            % Species Type
-            sSpeciesType = 'Unknown';
-            if vSpecies.isBeam
-                sSpeciesType = 'Beam';
-            end % if
-            if vSpecies.isPlasma
-                sSpeciesType = 'Plasma';
-            end % if
-
-            % Species Mass/Charge
-            try
-                dRQM = double(stData.species.rqm{1});
-            catch
-                dRQM = 0.0;
-            end % try
-
-            % Return Variables
-            stReturn.Name       = sPName;
-            stReturn.Data.Name  = sName;
-            stReturn.Data.Type  = sSpeciesType;
-            stReturn.Data.Class = cType{iType};
-            stReturn.Data.RQM   = dRQM;
-            
-
             %
-            % Species UDist
+            % Current Diagnostics
             %
             
-            % Only for Species and Catode
-            if iType == 1 || iType == 2
-                
-                % Thermal Spread
-                try
-                    aUth = double(cell2mat(stData.udist.uth));
-                catch
-                    aUth = [0.0];
-                end % try
-                aUth = obj.fArrayPad(aUth, [0.0 0.0 0.0]);
-
-                % Flow
-                try
-                    aUfl = double(cell2mat(stData.udist.ufl));
-                catch
-                    aUfl = [0.0];
-                end % try
-                aUfl = obj.fArrayPad(aUfl, [0.0 0.0 0.0]);
-                if aUfl(1) > 0.0
-                    iMoving = 1;
-                end % if
-
-                % Return Variables
-                stReturn.Data.Thermal  = aUth;
-                stReturn.Data.Momentum = aUfl;
-                
-            end % if
-
-            
-            %
-            % Species Diagnostic
-            %
-
-            % Raw Fraction
+            % Dump
             try
-                dRawFrac = double(stData.diag_species.raw_fraction{1});
+                iDump      = int64(obj.Input.diagnostics.current_diag.dfjp{1});
+                cDF{end+1} = 'Current';
             catch
-                dRawFrac = 0.0;
-            end % try
-
-            % PhaseSpace XMin
-            try
-                aDiagXMin = double(cell2mat(stData.diag_species.ps_xmin));
-            catch
-                aDiagXMin = [0.0];
-            end % try
-            aDiagXMin = obj.fArrayPad(aDiagXMin, [0.0 0.0 0.0]);
-
-            % PhaseSpace XMax
-            try
-                aDiagXMax = double(cell2mat(stData.diag_species.ps_xmax));
-            catch
-                aDiagXMax = [0.0];
-            end % try
-            aDiagXMax = obj.fArrayPad(aDiagXMax, [0.0 0.0 0.0]);
-
-            % PhaseSpace NX
-            try
-                aDiagNX = int64(cell2mat(stData.diag_species.ps_nx));
-            catch
-                aDiagNX = [0];
-            end % try
-            aDiagNX = obj.fArrayPad(aDiagNX, [0 0 0]);
-
-            % PhaseSpace PMin
-            try
-                aDiagPMin = double(cell2mat(stData.diag_species.ps_pmin));
-            catch
-                aDiagPMin = [0.0];
-            end % try
-            aDiagPMin = obj.fArrayPad(aDiagPMin, [0.0 0.0 0.0]);
-
-            % PhaseSpace PMax
-            try
-                aDiagPMax = double(cell2mat(stData.diag_species.ps_pmax));
-            catch
-                aDiagPMax = [0.0];
-            end % try
-            aDiagPMax = obj.fArrayPad(aDiagPMax, [0.0 0.0 0.0]);
-
-            % PhaseSpace NP
-            try
-                aDiagNP = int64(cell2mat(stData.diag_species.ps_np));
-            catch
-                aDiagNP = [0];
-            end % try
-            aDiagNP = obj.fArrayPad(aDiagNP, [0 0 0]);
-            
-            % PhaseSpace LMin
-            try
-                aDiagLMin = double(cell2mat(stData.diag_species.ps_lmin));
-            catch
-                aDiagLMin = [0.0];
-            end % try
-            aDiagLMin = obj.fArrayPad(aDiagLMin, [0.0 0.0 0.0]);
-
-            % PhaseSpace LMax
-            try
-                aDiagLMax = double(cell2mat(stData.diag_species.ps_lmax));
-            catch
-                aDiagLMax = [0.0];
-            end % try
-            aDiagLMax = obj.fArrayPad(aDiagLMax, [0.0 0.0 0.0]);
-
-            % PhaseSpace NL
-            try
-                aDiagNL = int64(cell2mat(stData.diag_species.ps_nl));
-            catch
-                aDiagNL = [0];
-            end % try
-            aDiagNL = obj.fArrayPad(aDiagNL, [0 0 0]);
-            
-            % PhaseSpace Gamma Min
-            try
-                dDiagGMin = double(stData.diag_species.ps_gammamin{1});
-            catch
-                dDiagGMin = 0.0;
-            end % try
-
-            % PhaseSpace Gamma Max
-            try
-                dDiagGMax = double(stData.diag_species.ps_gammamax{1});
-            catch
-                dDiagGMax = 0.0;
-            end % try
-
-            % PhaseSpace NGamma
-            try
-                iDiagNG = int64(stData.diag_species.ps_ngamma{1});
-            catch
-                iDiagNG = 0;
-            end % try
-
-            % PhaseSpaces
-            try
-                cPhaseSpaces = obj.Translate.EvalPhaseSpace(stData.diag_species.phasespaces);
-            catch
-                cPhaseSpaces = {};
+                iDump = 0;
             end % try
             
-            % Reports
+            % Slices
             try
-                cReports = stData.diag_species.reports;
+                iDumpSlice = int64(obj.Input.diagnostics.current_diag.dfjpslice{1});
+                dX0        = double(obj.Input.diagnostics.current_diag.jpx0{1});
+                dY0        = double(obj.Input.diagnostics.current_diag.jpy0{1});
+                dZ0        = double(obj.Input.diagnostics.current_diag.jpz0{1});
+                aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'Current';
             catch
-                cReports = {};
-            end % try
-
-            stReports = obj.fParseReports(cReports);
-
-            % Reports, UDist
-            try
-                cRepUDist = stData.diag_species.rep_udist;
-            catch
-                cRepUDist = {};
+                iDumpSlice = 0;
+                aSlices    = [0 0 0];
             end % try
             
-            % Return Variables
-            stReturn.Data.RawFraction  = dRawFrac;
-            stReturn.Data.DiagXMin     = aDiagXMin;
-            stReturn.Data.DiagXMax     = aDiagXMax;
-            stReturn.Data.DiagNX       = aDiagNX;
-            stReturn.Data.DiagPMin     = aDiagPMin;
-            stReturn.Data.DiagPMax     = aDiagPMax;
-            stReturn.Data.DiagNP       = aDiagNP;
-            stReturn.Data.DiagLMin     = aDiagLMin;
-            stReturn.Data.DiagLMax     = aDiagLMax;
-            stReturn.Data.DiagNL       = aDiagNL;
-            stReturn.Data.DiagGammaMin = dDiagGMin;
-            stReturn.Data.DiagGammaMax = dDiagGMax;
-            stReturn.Data.DiagNGamma   = iDiagNG;
-            stReturn.Data.DiagReports  = stReports;
-            stReturn.Data.DiagUDist    = cRepUDist;
-            stReturn.Data.PhaseSpaces  = cPhaseSpaces;
-
+            % Save Variables
+            obj.Diag.Current.Dump      = iDump;
+            obj.Diag.Current.DumpSlice = iDumpSlice;
+            obj.Diag.Current.Slices    = aSlices;
 
             %
-            % Species Profile
+            % Potential Diagnostics
             %
             
-            % Only for Species, Neutral and NeutralMovIons
-            if iType == 1 || iType == 3 || iType == 4
-                
-                stProfile = obj.fGetSpeciesProfile(stData,iMoving);
-                stReturn.Data.Profile = stProfile;
-                
-            end % if
-            
-            % Set Species Type if Still Unknown
-            if strcmpi(sSpeciesType,'Unknown')
-                if iMoving
-                    stReturn.Data.Type = 'Beam';
-                else
-                    stReturn.Data.Type = 'Plasma';
-                end % if
-            end % if
-            
-        end % function
-        
-        function stReturn = fGetSpeciesProfile(obj, stData, iMov)
-            
-            stReturn = {};
-            
-            % Variables
-            iDim  = obj.Simulation.Dimensions;
-            dTMin = obj.Simulation.TMin;
-            dTMax = obj.Simulation.TMax;
-            aXMin = obj.Simulation.XMin;
-            aXMax = obj.Simulation.XMax;
-            aGrid = obj.Simulation.Grid;
-
-            % Profile Size
+            % Dump
             try
-                iNumX = int64(stData.profile.num_x{1});
+                iDump      = int64(obj.Input.diagnostics.potential_diag.dfpsi{1});
+                cDF{end+1} = 'Potential';
             catch
-                iNumX = -1;
-            end % try
-
-            % Density
-            try
-                dDensity = double(stData.profile.density{1});
-            catch
-                dDensity = 1.0;
-            end % try
-
-            % Profile Type
-            try
-                cType = stData.profile.profile_type;
-            catch
-                cType = {};
+                iDump = 0;
             end % try
             
-            sTypeAll = '';
-            sTypeX1  = '';
-            sTypeX2  = '';
-            sTypeX3  = '';
-            if isempty(cType)
-                if iNumX > 0
-                    sTypeX1 = 'piecewise-linear';
-                    sTypeX2 = 'piecewise-linear';
-                    if iDim > 2
-                        sTypeX3 = 'piecewise-linear';
-                    end % if
-                else
-                    sTypeAll = 'uniform';
-                end % if
-            else
-                switch(length(cType))
-                    case 1
-                        sTypeAll = cType{1};
-                    case 2
-                        sTypeX1 = cType{1};
-                        sTypeX2 = cType{2};
-                    case 3
-                        sTypeX1 = cType{1};
-                        sTypeX2 = cType{2};
-                        sTypeX3 = cType{3};
-                end % switch
-            end % if
+            % Slices
+            try
+                iDumpSlice = int64(obj.Input.diagnostics.potential_diag.dfpsislice{1});
+                dX0        = double(obj.Input.diagnostics.potential_diag.psix0{1});
+                dY0        = double(obj.Input.diagnostics.potential_diag.psiy0{1});
+                dZ0        = double(obj.Input.diagnostics.potential_diag.psiz0{1});
+                aSlices    = [dZ0 dX0 dY0];
+                cDS{end+1} = 'Potential';
+            catch
+                iDumpSlice = 0;
+                aSlices    = [0 0 0];
+            end % try
             
-            % Return Variables
-            stReturn.TypeAll = sTypeAll;
-            stReturn.TypeX1  = sTypeX1;
-            stReturn.TypeX2  = sTypeX2;
-            stReturn.TypeX3  = sTypeX3;
-            stReturn.NumX    = iNumX;
-            stReturn.Density = dDensity;
+            % Save Variables
+            obj.Diag.Potential.Dump      = iDump;
+            obj.Diag.Potential.DumpSlice = iDumpSlice;
+            obj.Diag.Potential.Slices    = aSlices;
             
-
             %
-            % Calculate Profile Slice for Each Dimension
+            %  Diagnostics Lists
             %
             
-            stProfile(3).Axis   = [];
-            stProfile(3).Value  = [];
-            stProfile(3).Delta  = [];
-            stProfile(3).Length = [];
-            dDeltaCorr          = 1.0;
-            
-            for d=1:iDim
-            
-                % Determine Limits
-                if iMov || d > 1
-                    dMin = aXMin(d);
-                    dMax = aXMax(d);
-                    iN   = aGrid(d);
-                else
-                    dMin = dTMin;
-                    dMax = dTMax;
-                    iN   = floor(dMax-dMin);
-                end % if
+            obj.Diag.Diagnostics = cDF;
+            obj.Diag.Slices      = cDS;
 
-                % Set Minimum Resolution
-                %if iN < 1000
-                %    dDeltaCorr = dDeltaCorr * iN/1000;
-                %    iN = 1000;
-                %end % if
-
-                % Make Profile Array
-                stProfile(d).Axis   = linspace(dMin,dMax,iN+1);
-                stProfile(d).Value  = zeros(1,iN+1);
-                stProfile(d).Delta  = (dMax-dMin)/iN;
-                stProfile(d).Length = iN+1;
-
-            end % for
-
-            dPeak   = dDensity;
-            dCharge = 0.0;
-            
-            % With Type Set for Each Dimension
-
-            if isempty(sTypeAll)
-
-                for d=1:iDim
-
-                    % Determine Type
-                    switch(d)
-                        case 1; sType = sTypeX1;
-                        case 2; sType = sTypeX2;
-                        case 3; sType = sTypeX3;
-                    end % switch
-
-                    % Make Profiles
-                    switch(sType)
-
-                        case 'gaussian'
-                            fprintf(2,'Gaussian particle profile calculations not implemented.\n');
-
-                        case 'piecewise-linear'
-                            
-                            % Get Profile Vectors
-                            try
-                                aX = double(cell2mat(stData.profile.x(:,d)));
-                            catch
-                                aX = zeros(iNumX,1);
-                            end % try
-                            try
-                                aFX = double(cell2mat(stData.profile.fx(:,d)));
-                            catch
-                                aFX = zeros(iNumX,1);
-                            end % try
-                            
-                            bErr = 0;
-                            if length(aX)  ~= length(aFX); bErr = 1; end % if
-                            if length(aX)  ~= iNumX;       bErr = 1; end % if
-                            if length(aFX) ~= iNumX;       bErr = 1; end % if
-                            
-                            if bErr
-                                fprintf(2,'Error: x, fx, num_x and dimensions do not match in input file.\n');
-                                continue;
-                            end % if
-                            
-                            aX = floor(aX/stProfile(d).Delta);
-                            for n=1:iNumX-1
-                                iA = aX(n)+1; iB = aX(n+1)+1; iC = iB-iA+1;
-                                stProfile(d).Value(iA:iB) = linspace(aFX(n),aFX(n+1),iC);
-                            end % for
-                            
-                            dPeak = dPeak * max(stProfile(d).Value);
-
-                    end % switch
-
-                end % if
-
-            end % for
-                    
-            % Common Profile Types
-
-            switch(sTypeAll)
-
-                case 'uniform'
-                    stProfile(1).Value = ones(1,stProfile(1).Length);
-                    stProfile(2).Value = ones(1,stProfile(2).Length);
-                    stProfile(3).Value = ones(1,stProfile(3).Length);
-
-                case 'channel'
-                    fprintf(2,'Channel particle profile calculations not implemented.\n');
-
-                case 'sphere'
-                    fprintf(2,'Spherical particle profile calculations not implemented.\n');
-
-                case 'math func'
-
-                    % Get Math Function
-                    try
-                        sFunction = stData.profile.math_func_expr{1};
-                    catch
-                        sFunction = '';
-                    end % try
-
-                    if ~isempty(sFunction)
-
-                        oMathFunc = MathFunc(sFunction);
-
-                        if iDim > 2
-                            mTemp = oMathFunc.Eval(stProfile(1).Axis,stProfile(2).Axis,[0]);
-                            mTemp = mTemp.*(mTemp > 0);
-                            stProfile(1).Value = sum(mTemp,1);
-                            stProfile(2).Value = sum(mTemp,2)';
-                            aTemp = mTemp;
-
-                            mTemp = oMathFunc.Eval(stProfile(1).Axis,[0],stProfile(3).Axis);
-                            mTemp = mTemp.*(mTemp > 0);
-                            stProfile(3).Value = squeeze(sum(mTemp,2))';
-                            aTemp   = squeeze(sum(mTemp,3)).*squeeze(sum(aTemp,1));
-                            dCharge = sum(aTemp(:))*dDeltaCorr;
-                        else
-                            mTemp = oMathFunc.Eval(stProfile(1).Axis,stProfile(2).Axis,[0]);
-                            mTemp = mTemp.*(mTemp > 0);
-                            stProfile(1).Value = sum(mTemp,1);
-                            stProfile(2).Value = sum(mTemp,2)';
-                            if obj.Simulation.Cylindrical
-                                aRVec   = stProfile(2).Axis; % + 0.5*stProfile(2).Delta;
-                                aTemp   = bsxfun(@times,mTemp,aRVec');
-                                dCharge = sum(aTemp(:))*dDeltaCorr;
-                            else
-                                % This calculation has not been checked, but it sums all elements
-                                % down on x1 axis and squares them before doing another sum.
-                                aTemp   = sum(mTemp,1).^2;
-                                dCharge = sum(aTemp(:))*dDeltaCorr;
-                            end % if
-                        end % if
-
-                        dPeak = dPeak * max(mTemp(:));
-
-                    end % if
-
-            end % switch
-
-            % Save Profile Lineouts
-            stReturn.ProfileX1   = stProfile(1);
-            stReturn.ProfileX2   = stProfile(2);
-            stReturn.ProfileX3   = stProfile(3);
-            stReturn.PeakDensity = dPeak;
-            stReturn.Charge      = dCharge*dDensity;
-            
         end % function
 
     end % methods
