@@ -626,15 +626,23 @@ classdef QPICConfig
                 catch
                     aParam = zeros(5,3);
                 end % try
+                
+                % Calculate Additional Variables
+                dECharge    = obj.Constants.SI.ElementaryCharge;
+                iSimTotal   = prod(aNPart);
+                dBeamCharge = dCharge * dECharge * double(iCount);
+                dSimCharge  = dBeamCharge/double(iSimTotal);
 
                 % Save Variables
                 obj.Beam.(sNewName).BeamEvol     = iBeamEvol;
                 obj.Beam.(sNewName).SimParticles = aNPart;
-                obj.Beam.(sNewName).SimTotal     = prod(aNPart);
+                obj.Beam.(sNewName).SimTotal     = iSimTotal;
+                obj.Beam.(sNewName).SimCharge    = dSimCharge;
                 obj.Beam.(sNewName).Charge       = dCharge;
                 obj.Beam.(sNewName).Mass         = dMass;
                 obj.Beam.(sNewName).Gamma        = dGamma;
                 obj.Beam.(sNewName).NumParticles = iCount;
+                obj.Beam.(sNewName).BeamCharge   = dBeamCharge;
                 obj.Beam.(sNewName).Position     = aParam(1,[3 1 2])*1e-6;
                 obj.Beam.(sNewName).Profile      = aParam(2,[3 1 2])*1e-6;
                 obj.Beam.(sNewName).Emittance    = aParam(3,[3 1 2])*1e-6;
@@ -696,7 +704,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.field_diag.dfe{1});
                 cDF{end+1} = 'EField';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Dump Slices
@@ -726,7 +734,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.field_diag.dfb{1});
                 cDF{end+1} = 'BField';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Dump Slices
@@ -756,7 +764,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.beam_diag.dfqeb{1});
                 cDF{end+1} = 'Beam';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Slices
@@ -786,7 +794,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.plasma_diag.dfqep{1});
                 cDF{end+1} = 'Plasma';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Slices
@@ -816,7 +824,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.current_diag.dfjp{1});
                 cDF{end+1} = 'Current';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Slices
@@ -846,7 +854,7 @@ classdef QPICConfig
                 iDump      = int64(obj.Input.diagnostics.potential_diag.dfpsi{1});
                 cDF{end+1} = 'Potential';
             catch
-                iDump = 0;
+                iDump      = 0;
             end % try
             
             % Slices
@@ -873,7 +881,37 @@ classdef QPICConfig
             
             obj.Diag.Diagnostics = cDF;
             obj.Diag.Slices      = cDS;
-
+            
+            %
+            % RAW Dump Diagnostics
+            %
+            
+            % Dump Enabled
+            try
+                bDump = int64(obj.Input.diagnostics.beam_phase_space_diag.dump_pha_beam{1});
+            catch
+                bDump = 0;
+            end % try
+            
+            % Dump Time Step
+            try
+                iDump = int64(obj.Input.diagnostics.beam_phase_space_diag.dfpha_beam{1});
+            catch
+                iDump = 0;
+            end % try
+            
+            % Dump Sample
+            try
+                iSample = int64(obj.Input.diagnostics.beam_phase_space_diag.dsample_beam{1});
+            catch
+                iSample = 0;
+            end % try
+            
+            % Save Variables
+            obj.Diag.RAW.Enabled  = bDump;
+            obj.Diag.RAW.TimeStep = iDump;
+            obj.Diag.RAW.Sample   = iSample;
+            
         end % function
 
     end % methods
