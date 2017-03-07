@@ -209,7 +209,7 @@ classdef QPICData
         
         function Version(~)
             
-            fprintf('QPICAnalysis Version Dev0.1\n');
+            fprintf('QPICAnalysis Version 0.1\n');
             
         end % function
 
