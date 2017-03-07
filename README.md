@@ -20,7 +20,7 @@ Currently only the first layer is ported from OsirisAnalysis.
 
 ### Layer 1
 
-The basic layer of QPICAnalysis. COntains two classes:
+The basic layer of QPICAnalysis. Contains two classes:
 
 #### QPICData
 

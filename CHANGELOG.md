@@ -1,6 +1,6 @@
 # QuickPIC Analysis Toolbox
 MATLAB package for analysing QuickPIC data<br>
-Current version: 0.1
+Current version: Dev0.2
 
 **Developed by:**<br>
 Veronica K. Berglyd Olsen<br>
@@ -9,7 +9,13 @@ University of Oslo
 
 ## Development History
 
+### Version 0.2
+_Under Development_
+
+* Nothing yet
+
 ### Version 0.1
+_Released 07.03.2017_
 
 * Core classes QPICData and QPICConfig added. Derived from the similar classes written for Osiris in the project [OsirisAnalysis](https://github.com/Jadzia626/OsirisAnalysis).
 * The QPICData class wraps the dataset and creates a list of what data is available. The data can be extracted by the Data() function for all types of data.
