@@ -222,9 +222,9 @@ classdef QPICData
             %  Input:
             % ========
             %  iTime    :: Time dump to extract
-            %  sType    :: Data type [F, J, PSI, Q]
-            %  sSet     :: Data set i.e. EX, BY, etc
-            %  sSpecies :: Particle species i.e. EB, EP01, etc
+            %  sType    :: Data type i.e F, J, PSI, Q, RAW
+            %  sSet     :: Data set i.e. EX, BY, PSI, etc
+            %  sSpecies :: Particle species i.e. EB, EP01, etc or for RAW, 01, 02, etc
             %  sSlice   :: Which data slice i.e. XY, XZ or YZ or blank for 3D
             %
             
@@ -239,9 +239,9 @@ classdef QPICData
                 fprintf('  Input:\n');
                 fprintf(' ========\n');
                 fprintf('  iTime    :: Time dump to extract\n');
-                fprintf('  sType    :: Data type [F, J, PSI, Q]\n');
-                fprintf('  sSet     :: Data set i.e. EX, BY, etc\n');
-                fprintf('  sSpecies :: Particle species i.e. EB, EP01, etc\n');
+                fprintf('  sType    :: Data type i.e. F, J, PSI, Q, RAW\n');
+                fprintf('  sSet     :: Data set i.e. EX, BY, PSI, etc\n');
+                fprintf('  sSpecies :: Particle species i.e. EB, EP01, etc or for RAW, 01, 02, etc\n');
                 fprintf('  sSlice   :: Which data slice i.e. XY, XZ or YZ or blank for 3D\n');
                 fprintf('\n');
                 return;
@@ -282,7 +282,7 @@ classdef QPICData
             sFolder   = obj.SimData.Data(iIndex).Path;
             iFiles    = obj.SimData.Data(iIndex).Files;
             sTimeNExt = sprintf('%08d', iTime);
-            sFile     = ['/',sFolder,'_',sTimeNExt,'.h5'];
+            sFile     = ['/',strrep(sFolder,'/','-'),'_',sTimeNExt,'.h5'];
             sLoad     = [obj.Path,'/',sFolder,sFile];
             
             % Check if datafile exists
@@ -293,7 +293,20 @@ classdef QPICData
 
             % Wraps reading in a try/catch because sometimes files are corrupt even if they exist.
             try
-                aReturn = double(h5read(sLoad, ['/',sFolder]));
+                if strcmpi(sType,'RAW')
+                    stInfo  = h5info(sLoad,'/x1');
+                    iSize   = stInfo.Dataspace.Size;
+                    aReturn = zeros(iSize,6);
+
+                    aReturn(:,1) = double(h5read(sLoad,'/x3'));
+                    aReturn(:,2) = double(h5read(sLoad,'/x1'));
+                    aReturn(:,3) = double(h5read(sLoad,'/x2'));
+                    aReturn(:,4) = double(h5read(sLoad,'/p3'));
+                    aReturn(:,5) = double(h5read(sLoad,'/p1'));
+                    aReturn(:,6) = double(h5read(sLoad,'/p2'));
+                else
+                    aReturn = double(h5read(sLoad, ['/',sFolder]));
+                end % if
             catch
                 fprintf(2, 'Error reading file %s\n', sLoad);
             end % try
@@ -353,11 +366,33 @@ classdef QPICData
                     sDir = 'All'; % If there are no directions specified, assume it's for all directions
                 end % if
 
-                subFiles = dir([obj.Path '/' sPath]);
-                numFiles = numel(subFiles) - 2;
+                if strcmpi(sName,'RAW')
+                    allDirs  = dir([obj.Path '/' sPath]);
+                    allBeams = allDirs([allDirs(:).isdir]);
+                    numBeams = numel(allBeams) - 2;
+                    
+                    stReturn.(sName).Info = struct('Path', '', 'Dirs', numBeams, 'Files', 0);
 
-                stReturn.(sName).Info        = struct('Path', '', 'Dirs', 0, 'Files', 0);
-                stReturn.(sName).(sDir).Info = struct('Path', sPath, 'Dirs', 0, 'Files', numFiles);
+                    for b=1:numel(allBeams)
+                        sBeam = allBeams(b).name;
+                        if sum(ismember(sBeam, cExclude)) > 0
+                            continue;
+                        end % if
+
+                        subFiles = dir([obj.Path '/' sPath '/' sBeam]);
+                        numFiles = numel(subFiles) - 2;
+                        sBName   = sprintf('EB%s',sBeam);
+                        sBPath   = sprintf('%s/%s',sPath,sBeam);
+
+                        stReturn.(sName).(sBName).Info = struct('Path', sBPath, 'Dirs', 0, 'Files', numFiles);
+                    end % for
+                else
+                    subFiles = dir([obj.Path '/' sPath]);
+                    numFiles = numel(subFiles) - 2;
+
+                    stReturn.(sName).Info        = struct('Path', '', 'Dirs', 0, 'Files', 0);
+                    stReturn.(sName).(sDir).Info = struct('Path', sPath, 'Dirs', 0, 'Files', numFiles);
+                end % if
                 
             end % for
             
@@ -413,18 +448,31 @@ classdef QPICData
                         sDType    = 'Q';
                         sDSet     = 'None';
                         sDSpecies = sType(2:end);
+                    case 'R'
+                        sDType    = 'RAW';
+                        sDSet     = 'None';
+                        sDSpecies = 'None';
                 end % switch
                 
                 if ~isempty(sDType)
                     stSlice = fieldnames(obj.Elements.(sType));
                     for j=2:length(stSlice)
+                        
+                        if strcmpi(sDType,'RAW')
+                            sDSpecies = stSlice{j};
+                            sDSlice   = 'All';
+                        else
+                            sDSlice   = stSlice{j};
+                        end % if
+
                         stData(iRow).Type    = sDType;
                         stData(iRow).Set     = sDSet;
                         stData(iRow).Species = sDSpecies;
-                        stData(iRow).Slice   = stSlice{j};
+                        stData(iRow).Slice   = sDSlice;
                         stData(iRow).Path    = obj.Elements.(sType).(stSlice{j}).Info.Path;
                         stData(iRow).Files   = obj.Elements.(sType).(stSlice{j}).Info.Files;
-                        stIndex.(sDType).(sDSet).(sDSpecies).(stSlice{j}) = iRow;
+                        
+                        stIndex.(sDType).(sDSet).(sDSpecies).(sDSlice) = iRow;
                         
                         iFiles = stData(iRow).Files;
                         if iFiles > iMax
