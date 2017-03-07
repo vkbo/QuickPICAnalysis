@@ -413,14 +413,14 @@ classdef QPICConfig
             dLambdaP = 2*pi * dC / dOmegaP;
             
             % Coordinates
-            %try
+            try
                 indX  = obj.Input.simulation.simulation_sys.indx{1};
                 indY  = obj.Input.simulation.simulation_sys.indy{1};
                 indZ  = obj.Input.simulation.simulation_sys.indz{1};
                 aGrid = [2^indZ 2^indX 2^indY];
-            %catch
-            %    aGrid = [1 1 1];
-            %end % try
+            catch
+                aGrid = [1 1 1];
+            end % try
             iDim  = 3;
             aGrid = obj.fArrayPad(aGrid, [0 0 0]);
             
