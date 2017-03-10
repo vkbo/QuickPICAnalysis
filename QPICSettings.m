@@ -20,4 +20,5 @@ sHost     = strtrim(sHost);
 % Rey
 if strcmpi(sHost,'Rey')
     stFolders.IntTSeries = struct('Path', '/scratch/QuickPICData/T-Series', 'Depth', 1, 'Name', 'Data: T-Series');
+    stFolders.IntTSeries = struct('Path', '/scratch/SimData/Q-Series',      'Depth', 1, 'Name', 'Data: Q-Series');
 end % if

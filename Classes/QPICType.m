@@ -12,7 +12,7 @@ classdef QPICType
     
     properties(GetAccess='public', SetAccess='public')
         
-        Time        = 0;                         % Current time (dumb number)
+        Time        = 1;                         % Current time (dumb number)
         X1Lim       = [];                        % Axes limits x1
         X2Lim       = [];                        % Axes limits x2
         X3Lim       = [];                        % Axes limits x3
@@ -34,6 +34,8 @@ classdef QPICType
         ParticleFac = 1.0;                       % Q-to-particles factor
         ChargeFac   = 1.0;                       % Q-to-charge factor
         BoxOffset   = 0.0;                       % Start of the box in simulation
+        XOrigin     = 0.0;                       % Position defined as 0 on the x axis
+        YOrigin     = 0.0;                       % Position defined as 0 on the y axis
 
     end % properties
     
@@ -64,11 +66,12 @@ classdef QPICType
             
             % Read Input Parameters
             oOpt = inputParser;
-            addParameter(oOpt, 'Units',   'N');
-            addParameter(oOpt, 'Scale',   '');
-            addParameter(oOpt, 'X1Scale', 'Auto');
-            addParameter(oOpt, 'X2Scale', 'Auto');
-            addParameter(oOpt, 'X3Scale', 'Auto');
+            addParameter(oOpt, 'Units',     'N');
+            addParameter(oOpt, 'Scale',     '');
+            addParameter(oOpt, 'X1Scale',   'Auto');
+            addParameter(oOpt, 'X2Scale',   'Auto');
+            addParameter(oOpt, 'X3Scale',   'Auto');
+            addParameter(oOpt, 'Symmetric', 'No');
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
 
@@ -77,6 +80,14 @@ classdef QPICType
                 obj.AxisScale = {stOpt.X1Scale, stOpt.X2Scale, stOpt.X3Scale};
             else
                 obj.AxisScale = {stOpt.Scale, stOpt.Scale, stOpt.Scale};
+            end % if
+            
+            % Set Symmetric X/Y Axis
+            if strcmpi(stOpt.Symmetric,'Yes')
+                obj.XOrigin = 0.5*aXMax(2);
+                obj.YOrigin = 0.5*aXMax(3);
+                aXMin(2:3)  = aXMin(2:3) - [obj.XOrigin obj.YOrigin];
+                aXMax(2:3)  = aXMax(2:3) - [obj.XOrigin obj.YOrigin];
             end % if
 
             % Evaluate Units
@@ -115,12 +126,8 @@ classdef QPICType
                 otherwise
                     obj.Units = 'N';
 
-                    obj.AxisFac = [1.0, 1.0, 1.0];
-                    if obj.Cylindrical
-                        obj.AxisUnits = {'c/\omega_p', 'c_/\omega_p', 'rad'};
-                    else
-                        obj.AxisUnits = {'c/\omega_p', 'c_/\omega_p', 'c/\omega_p'};
-                    end % if
+                    obj.AxisFac     = [1.0, 1.0, 1.0];
+                    obj.AxisUnits   = {'c/ω', 'c/ω', 'c/ω'};
                     obj.AxisRange   = [aXMin(1) aXMax(1) aXMin(2) aXMax(2) aXMin(3) aXMax(3)];
 
                     obj.ParticleFac = obj.Data.Config.Convert.Norm.ParticleFac;
@@ -130,7 +137,7 @@ classdef QPICType
 
             % Set defult axis limits
             obj.X1Lim = [aXMin(1) aXMax(1)]*obj.AxisFac(1);
-            obj.X2Lim = [ aXMin(2) aXMax(2)]*obj.AxisFac(2);
+            obj.X2Lim = [aXMin(2) aXMax(2)]*obj.AxisFac(2);
             obj.X3Lim = [aXMin(3) aXMax(3)]*obj.AxisFac(3);
             
             % Set default slice for 3D
@@ -149,84 +156,83 @@ classdef QPICType
         
         function obj = set.Time(obj, iTime)
             
+            if iTime < 1
+                iTime = 1;
+            end % if
+            
             obj.Time = iTime;
             
         end % function
         
-        function obj = set.X1Lim(obj, aX1Lim)
+        function obj = set.X1Lim(obj, aLim)
 
-            dX1Min = obj.Data.Config.Simulation.XMin(1);
-            dX1Max = obj.Data.Config.Simulation.XMax(1);
+            dXMin = obj.AxisRange(1);
+            dXMax = obj.AxisRange(2);
 
-            if length(aX1Lim) ~= 2
+            if length(aLim) ~= 2
                 fprintf(2, 'Error: x1 limit needs to be a vector of dimension 2.\n');
                 return;
             end % if
 
-            if aX1Lim(2) < aX1Lim(1)
+            if aLim(2) < aLim(1)
                 fprintf(2, 'Error: second value must be larger than first value.\n');
                 return;
             end % if
 
-            if aX1Lim(1)/obj.AxisFac(1) < dX1Min || aX1Lim(1)/obj.AxisFac(1) > dX1Max ...
-            || aX1Lim(2)/obj.AxisFac(1) < dX1Min || aX1Lim(2)/obj.AxisFac(1) > dX1Max
-                fprintf('Warning: X1Lim input is out of range. Range is %.2f–%.2f %s.\n', dX1Min*obj.AxisFac(1), dX1Max*obj.AxisFac(1), obj.AxisUnits{1});
-                aX1Lim(1) = dX1Min*obj.AxisFac(1);
+            if aLim(1) < dXMin || aLim(1) > dXMax || aLim(2) < dXMin || aLim(2) > dXMax
+                fprintf('Warning: Lim input is out of range. Range is %.2f–%.2f %s.\n',dXMin,dXMax,obj.AxisUnits{1});
+                aLim = obj.AxisRange(1:2);
             end % if
 
-            obj.X1Lim = aX1Lim/obj.AxisFac(1);
+            obj.X1Lim = aLim/obj.AxisFac(1);
 
         end % function
          
-        function obj = set.X2Lim(obj, aX2Lim)
+        function obj = set.X2Lim(obj, aLim)
  
-            dX2Min = obj.Data.Config.Simulation.XMin(2);
-            dX2Max = obj.Data.Config.Simulation.XMax(2);
+            dXMin = obj.AxisRange(3);
+            dXMax = obj.AxisRange(4);
 
-            if length(aX2Lim) ~= 2
+            if length(aLim) ~= 2
                 fprintf(2, 'Error: x2 limit needs to be a vector of dimension 2.\n');
                 return;
             end % if
 
-            if aX2Lim(2) < aX2Lim(1)
+            if aLim(2) < aLim(1)
                 fprintf(2, 'Error: second value must be larger than first value.\n');
                 return;
             end % if
             
-            if aX2Lim(1)/obj.AxisFac(2) < dX2Min || aX2Lim(1)/obj.AxisFac(2) > dX2Max ...
-            || aX2Lim(2)/obj.AxisFac(2) < dX2Min || aX2Lim(2)/obj.AxisFac(2) > dX2Max
-                fprintf('Warning: X2Lim input is out of range. Range is %.2f–%.2f %s.\n', ...
-                        dX2Min*obj.AxisFac(2), dX2Max*obj.AxisFac(2), obj.AxisUnits{2});
-                aX2Lim = [dX2Min*obj.AxisFac(2) dX2Max*obj.AxisFac(2)];
+            if aLim(1) < dXMin || aLim(1) > dXMax || aLim(2) < dXMin || aLim(2) > dXMax
+                fprintf('Warning: Lim input is out of range. Range is %.2f–%.2f %s.\n',dXMin,dXMax,obj.AxisUnits{2});
+                aLim = obj.AxisRange(3:4);
             end % if
 
-            obj.X2Lim = aX2Lim/obj.AxisFac(2);
+            obj.X2Lim = aLim/obj.AxisFac(2);
              
         end % function
  
-        function obj = set.X3Lim(obj, aX3Lim)
+        function obj = set.X3Lim(obj, aLim)
 
-            dX3Min = obj.Data.Config.Simulation.XMin(3);
-            dX3Max = obj.Data.Config.Simulation.XMax(3);
+            dXMin = obj.AxisRange(5);
+            dXMax = obj.AxisRange(6);
 
-            if length(aX3Lim) ~= 2
+            if length(aLim) ~= 2
                 fprintf(2, 'Error: x3 limit needs to be a vector of dimension 2.\n');
                 return;
             end % if
 
-            if aX3Lim(2) < aX3Lim(1)
+            if aLim(2) < aLim(1)
                 fprintf(2, 'Error: second value must be larger than first value.\n');
                 return;
             end % if
 
-            if aX3Lim(1)/obj.AxisFac(3) < dX3Min || aX3Lim(1)/obj.AxisFac(3) > dX3Max ...
-            || aX3Lim(2)/obj.AxisFac(3) < dX3Min || aX3Lim(2)/obj.AxisFac(3) > dX3Max
-                fprintf('Warning: X3Lim input is out of range. Range is %.2f–%.2f %s.\n', ...
-                        dX3Min*obj.AxisFac(3), dX3Max*obj.AxisFac(3), obj.AxisUnits{3});
-                aX3Lim = [dX3Min*obj.AxisFac(3) dX3Max*obj.AxisFac(3)];
+            if aLim(1) < dXMin || aLim(1) > dXMax || aLim(2) < dXMin || aLim(2) > dXMax
+                fprintf('Warning: Lim input is out of range. Range is %.2f–%.2f %s.\n',dXMin,dXMax,obj.AxisUnits{3});
+                aLim = obj.AxisRange(5:6);
             end % if
 
-            obj.X3Lim = aX3Lim/obj.AxisFac(3);
+            obj.X3Lim = aLim/obj.AxisFac(3);
 
         end % function
         
@@ -519,30 +525,32 @@ classdef QPICType
 
         function aReturn = fGetBoxAxis(obj, sAxis)
             
+            dLFac = obj.Data.Config.Convert.SI.LengthFac;
+
             switch sAxis
                 case 'x1'
-                    dXMin = obj.Data.Config.Simulation.XMin(1);
-                    dXMax = obj.Data.Config.Simulation.XMax(1);
-                    iNX   = obj.Data.Config.Simulation.Grid(1);
-                    dLFac = obj.AxisFac(1);
+                    dXMin  = obj.Data.Config.Simulation.XMin(1)/dLFac;
+                    dXMax  = obj.Data.Config.Simulation.XMax(1)/dLFac;
+                    iNX    = obj.Data.Config.Simulation.Grid(1);
+                    dScale = obj.AxisFac(1);
                 case 'x2'
-                    dXMin = obj.Data.Config.Simulation.XMin(2);
-                    dXMax = obj.Data.Config.Simulation.XMax(2);
-                    iNX   = obj.Data.Config.Simulation.Grid(2);
-                    dLFac = obj.AxisFac(2);
+                    dXMin  = obj.Data.Config.Simulation.XMin(2)/dLFac - obj.XOrigin;
+                    dXMax  = obj.Data.Config.Simulation.XMax(2)/dLFac - obj.XOrigin;
+                    iNX    = obj.Data.Config.Simulation.Grid(2);
+                    dScale = obj.AxisFac(2);
                 case 'x3'
-                    dXMin = obj.Data.Config.Simulation.XMin(3);
-                    dXMax = obj.Data.Config.Simulation.XMax(3);
-                    iNX   = obj.Data.Config.Simulation.Grid(3);
-                    dLFac = obj.AxisFac(3);
+                    dXMin  = obj.Data.Config.Simulation.XMin(3)/dLFac - obj.YOrigin;
+                    dXMax  = obj.Data.Config.Simulation.XMax(3)/dLFac - obj.YOrigin;
+                    iNX    = obj.Data.Config.Simulation.Grid(3);
+                    dScale = obj.AxisFac(3);
                 otherwise
-                    dXMin = 0.0;
-                    dXMax = 0.0;
-                    iNX   = 0;
-                    dLFac = 0;
+                    dXMin  = 0.0;
+                    dXMax  = 0.0;
+                    iNX    = 0;
+                    dScale = 1.0;
             end % switch
 
-            aReturn = linspace(dXMin, dXMax, iNX)*dLFac;
+            aReturn = linspace(dXMin, dXMax, iNX)*dScale;
             
         end % function
         
@@ -567,7 +575,7 @@ classdef QPICType
             
             if obj.Error
                 
-                fprintf(2, 'OsirisType object not initialised properly.\n');
+                fprintf(2, 'QPICType object not initialised properly.\n');
                 bReturn = true;
                 
             end % if
@@ -581,12 +589,27 @@ classdef QPICType
             
         end % function
         
-        function aReturn = fPruneRaw(obj, aRaw, iVar, dMin, dMax)
+        function aRaw = fRawToXi(obj, aRaw)
+
+            dOffset = obj.Data.Config.Simulation.TimeStep*obj.Data.Config.Simulation.NDump*obj.Time;
+            aRaw(:,1) = aRaw(:,1) - dOffset;
+            
+        end % function
+
+    end % methods
+
+    %
+    %  Static Methods
+    %
+
+    methods(Static, Access='private')
+     
+        function aReturn = fPruneRaw(aRaw, iVar, dMin, dMax)
             
             % By default do nothing.
             aReturn = aRaw;
             
-            if iVar < 1 || iVar > 8 || isempty(dMin) && isempty(dMax)
+            if iVar < 1 || iVar > 6 || isempty(dMin) && isempty(dMax)
                 return;
             end % if
             
@@ -599,13 +622,6 @@ classdef QPICType
                 aInd = aReturn(:,iVar) > dMax;
                 aReturn(aInd,:) = [];
             end % if
-            
-        end % function
-        
-        function aRaw = fRawToXi(obj, aRaw)
-
-            dOffset = obj.Data.Config.Simulation.TimeStep*obj.Data.Config.Simulation.NDump*obj.Time;
-            aRaw(:,1) = aRaw(:,1) - dOffset;
             
         end % function
 
