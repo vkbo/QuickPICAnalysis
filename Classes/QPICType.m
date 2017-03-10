@@ -480,17 +480,14 @@ classdef QPICType
             if iDim == 3
                 switch iSliceAxis
                     case 1
-                        aData  = squeeze(aData(obj.Slice,:,:));
-                    case 2
-                        aData  = squeeze(aData(:,obj.Slice,:));
-                    case 3
                         aData  = squeeze(aData(:,:,obj.Slice));
+                    case 2
+                        aData  = squeeze(aData(obj.Slice,:,:));
+                    case 3
+                        aData  = squeeze(aData(:,obj.Slice,:));
                 end % switch
             end % if
 
-            % Check if cylindrical
-            aData = transpose(aData);
-            
             % Get Limits
             iHMin = fGetIndex(aHAxis, aHLim(1));
             iHMax = fGetIndex(aHAxis, aHLim(2));
@@ -526,6 +523,7 @@ classdef QPICType
         function aReturn = fGetBoxAxis(obj, sAxis)
             
             dLFac = obj.Data.Config.Convert.SI.LengthFac;
+            sAxis = obj.fTranslateAxis(sAxis);
 
             switch sAxis
                 case 'x1'
@@ -602,7 +600,7 @@ classdef QPICType
     %  Static Methods
     %
 
-    methods(Static, Access='private')
+    methods(Static, Access='protected')
      
         function aReturn = fPruneRaw(aRaw, iVar, dMin, dMax)
             
@@ -624,7 +622,54 @@ classdef QPICType
             end % if
             
         end % function
+        
+        function sReturn = fTranslateAxis(sAxis)
+            
+            switch lower(sAxis)
+                case 'x'
+                    sReturn = 'x2';
+                case 'y'
+                    sReturn = 'x3';
+                case 'z'
+                    sReturn = 'x1';
+                otherwise
+                    sReturn = sAxis;
+            end % switch
+            
+        end % function
+        
+        function bReturn = fValidSlice(sSlice)
+            
+            switch lower(sSlice)
+                case ''
+                    bReturn = true;
+                case 'xy'
+                    bReturn = true;
+                case 'xz'
+                    bReturn = true;
+                case 'yz'
+                    bReturn = true;
+                otherwise
+                    bReturn = false;
+            end % switch
+            
+        end % function
 
+        function cReturn = fSliceOrientation(sSlice)
+            
+            switch lower(sSlice)
+                case 'xy'
+                    cReturn = {'x2' 'x3'};
+                case 'xz'
+                    cReturn = {'x1' 'x2'};
+                case 'yz'
+                    cReturn = {'x1' 'x3'};
+                otherwise
+                    cReturn = {'' ''};
+            end % switch
+            
+        end % function
+        
     end % methods
     
 end % classdef
