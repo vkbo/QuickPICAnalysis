@@ -213,6 +213,100 @@ classdef QPICData
             
         end % function
 
+        function stReturn = BeamInfo(obj, iBeam)
+            
+            %
+            %  Attempts to Calculate Beam Info
+            % *********************************
+            %
+            
+            stReturn = {};
+            
+            dC    = obj.Config.Constants.SI.SpeedOfLight;
+            dE    = obj.Config.Constants.SI.ElementaryCharge;
+            dLFac = obj.Config.Convert.SI.LengthFac;
+            sBeam = sprintf('Beam%02d',iBeam);
+            
+            if ~obj.Silent
+                fprintf('\n');
+                fprintf(' Beam Info for %s\n',sBeam);
+                fprintf('**********************\n');
+                fprintf('\n');
+            end % if
+
+            %
+            % Sigma and Mean
+            %
+
+            dSIMeanX1  = obj.Config.Beam.(sBeam).Position(1);
+            dSIMeanX2  = obj.Config.Beam.(sBeam).Position(2);
+            dSIMeanX3  = obj.Config.Beam.(sBeam).Position(3);
+            
+            dSISigmaX1 = obj.Config.Beam.(sBeam).Profile(1);
+            dSISigmaX2 = obj.Config.Beam.(sBeam).Profile(2);
+            dSISigmaX3 = obj.Config.Beam.(sBeam).Profile(3);
+
+            dSIEmittX1 = obj.Config.Beam.(sBeam).Emittance(1);
+            dSIEmittX2 = obj.Config.Beam.(sBeam).Emittance(2);
+            dSIEmittX3 = obj.Config.Beam.(sBeam).Emittance(3);
+
+            dBeamGamma   = obj.Config.Beam.(sBeam).Gamma;
+            dBeamBeta    = sqrt(1-1/dBeamGamma^2);
+            dBeamCharge  = obj.Config.Beam.(sBeam).BeamCharge;
+            dBeamNum     = obj.Config.Beam.(sBeam).NumParticles;
+            dBeamCurrent = dBeamCharge*dC*dBeamBeta / sqrt(2*pi*dSISigmaX1^2);
+
+            stReturn.X1Mean      = dSIMeanX1;
+            stReturn.X2Mean      = dSIMeanX2;
+            stReturn.X3Mean      = dSIMeanX3;
+
+            stReturn.X1Sigma     = dSISigmaX1;
+            stReturn.X2Sigma     = dSISigmaX2;
+            stReturn.X3Sigma     = dSISigmaX3;
+
+            stReturn.X1Emittance = dSIEmittX1;
+            stReturn.X2Emittance = dSIEmittX2;
+            stReturn.X3Emittance = dSIEmittX3;
+
+            stReturn.Particles   = dBeamNum;
+            stReturn.Charge      = dBeamCharge;
+            stReturn.Current     = dBeamCurrent;
+
+            [dSIMeanX1,  sUnitM1] = fAutoScale(dSIMeanX1,'m',1e-9);
+            [dSIMeanX2,  sUnitM2] = fAutoScale(dSIMeanX2,'m',1e-9);
+            [dSIMeanX3,  sUnitM3] = fAutoScale(dSIMeanX3,'m',1e-9);
+
+            [dSISigmaX1, sUnitS1] = fAutoScale(dSISigmaX1,'m',1e-9);
+            [dSISigmaX2, sUnitS2] = fAutoScale(dSISigmaX2,'m',1e-9);
+            [dSISigmaX3, sUnitS3] = fAutoScale(dSISigmaX3,'m',1e-9);
+
+            [dSIEmittX1, sUnitE1] = fAutoScale(dSIEmittX1,'m',1e-9);
+            [dSIEmittX2, sUnitE2] = fAutoScale(dSIEmittX2,'m',1e-9);
+            [dSIEmittX3, sUnitE3] = fAutoScale(dSIEmittX3,'m',1e-9);
+            
+            [dBeamGamma,   sGammaUnit]   = fAutoScale(dBeamGamma,'');
+            [dBeamCharge,  sChargeUnit]  = fAutoScale(dBeamCharge,'C');
+            [dBeamCurrent, sCurrentUnit] = fAutoScale(dBeamCurrent,'A');
+            [dBeamNum,     sBeamNumUnit] = fAutoScale(dBeamNum,'');
+
+            if ~obj.Silent
+                fprintf(' X1 Mean, Sigma: %8.3f %2s, %8.3f %2s\n',dSIMeanX1,sUnitM1,dSISigmaX1,sUnitS1);
+                fprintf(' X2 Mean, Sigma: %8.3f %2s, %8.3f %2s\n',dSIMeanX2,sUnitM2,dSISigmaX2,sUnitS2);
+                fprintf(' X3 Mean, Sigma: %8.3f %2s, %8.3f %2s\n',dSIMeanX3,sUnitM3,dSISigmaX3,sUnitS3);
+                fprintf('\n');
+                fprintf(' X1 Emittance:   %8.3f %2s\n',dSIEmittX1,sUnitE1);
+                fprintf(' X2 Emittance:   %8.3f %2s\n',dSIEmittX2,sUnitE2);
+                fprintf(' X3 Emittance:   %8.3f %2s\n',dSIEmittX3,sUnitE3);
+                fprintf('\n');
+                fprintf(' Beam Gamma:     %8.3f %s\n', dBeamGamma, sGammaUnit);
+                fprintf(' Beam Charge:    %8.3f %s\n', dBeamCharge, sChargeUnit);
+                fprintf(' Beam Current:   %8.3f %s\n', dBeamCurrent, sCurrentUnit);
+                fprintf(' Particle Count: %8.3f %s Particles\n', dBeamNum, sBeamNumUnit);
+                fprintf('\n');
+            end % if
+            
+        end % function
+
         function aReturn = Data(obj, iTime, sType, sSet, sSpecies, sSlice)
             
             %
