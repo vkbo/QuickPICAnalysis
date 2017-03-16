@@ -442,7 +442,7 @@ classdef QPICData
 
             allFiles = dir(obj.Path);
             allDirs  = allFiles([allFiles(:).isdir]);
-            cExclude = {'.','..','ELOG'};
+            cExclude = {'.','..','ELOG','RST'};
             
             for f=1:numel(allDirs)
                 
