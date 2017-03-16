@@ -66,11 +66,11 @@ classdef QPICVector < QPICType
             % Set Field
             sVector   = lower(sVector);
             sAxisName = '';
-            cValid    = {'ex','ey','ez','bx','by','bz','wr','wz','jx','jy','jz'};
+            cValid    = {'ex','ey','ez','bx','by','bz','wr','wz','jpx','jpy','jpz'};
             if sum(ismember(sVector, cValid)) == 1
                 obj.VectorVar  = sVector;
                 obj.VectorType = sVector(1);
-                switch sVector(2)
+                switch sVector(end)
                     case 'x'
                         obj.VectorAxis = 2;
                         sAxisName      = 'Horizontal';
@@ -103,7 +103,7 @@ classdef QPICVector < QPICType
                         obj.VectorFac  = obj.Data.Config.Convert.SI.E0;
                         obj.VectorUnit = 'V/m';
                     case 'j'
-                        obj.VectorFac  = obj.Data.Config.Convert.SI.JFac;
+                        obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis);
                         obj.VectorUnit = 'A';
                 end % switch
             end % if
@@ -111,11 +111,11 @@ classdef QPICVector < QPICType
             % Names
             switch obj.VectorType
                 case 'e'
-                    obj.VectorName  = sprintf('%s E-field',sAxisName);
+                    obj.VectorName  = sprintf('%s E-Field',sAxisName);
                     obj.VectorShort = sprintf('E%s',sVector(2));
                     obj.VectorTex   = sprintf('E_{%s}',sVector(2));
                 case 'b'
-                    obj.VectorName  = sprintf('%s B-field',sAxisName);
+                    obj.VectorName  = sprintf('%s B-Field',sAxisName);
                     obj.VectorShort = sprintf('B%s',sVector(2));
                     obj.VectorTex   = sprintf('B_{%s}',sVector(2));
                 case 'w'
@@ -124,8 +124,8 @@ classdef QPICVector < QPICType
                     obj.VectorTex   = sprintf('W_{%s}',sVector(2));
                 case 'j'
                     obj.VectorName  = sprintf('%s Current',sAxisName);
-                    obj.VectorShort = sprintf('J%s',sVector(2));
-                    obj.VectorTex   = sprintf('J_{%s}',sVector(2));
+                    obj.VectorShort = sprintf('J%s',sVector(3));
+                    obj.VectorTex   = sprintf('J_{%s}',sVector(3));
             end % switch
 
         end % function
@@ -181,7 +181,7 @@ classdef QPICVector < QPICType
             stReturn.Data  = aData*obj.VectorFac;
             stReturn.HAxis = aHAxis;
             stReturn.VAxis = aVAxis;
-            stReturn.Axes  = cAxes;
+            stReturn.Axes  = {obj.fLabelAxis(cAxes{1}) obj.fLabelAxis(cAxes{2})};
             stReturn.ZPos  = obj.fGetZPos();        
         
         end % function
@@ -220,14 +220,14 @@ classdef QPICVector < QPICType
         
         end % function
         
-        function stReturn = Wakefield2D(obj, sWakefield, varargin)
+        function stReturn = Wakefield2D(obj, sSlice)
             
             % Input/Output
             stReturn = {};
                         
         end % function
 
-        function stReturn = WFLineout(obj, sWakefield, iStart, iAverage)
+        function stReturn = WFLineout(obj, sSlice, iStart, iAverage)
 
             % Input/Output
             stReturn = {};

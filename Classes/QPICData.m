@@ -532,7 +532,7 @@ classdef QPICData
                         sDSpecies = 'None';
                     case 'J'
                         sDType    = 'J';
-                        sDSet     = ['J' sType(end)];
+                        sDSet     = ['JP' sType(end)];
                         sDSpecies = 'None';
                     case 'P'
                         sDType    = 'PSI';

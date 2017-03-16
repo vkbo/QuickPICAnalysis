@@ -638,6 +638,31 @@ classdef QPICType
             
         end % function
         
+        function sReturn = fLabelAxis(sAxis)
+            
+            switch lower(sAxis)
+                case 'x'
+                    sReturn = 'x';
+                case 'y'
+                    sReturn = 'y';
+                case 'z'
+                    sReturn = '\xi';
+                case 'r'
+                    sReturn = 'r';
+                case 'x1'
+                    sReturn = '\xi';
+                case 'x2'
+                    sReturn = 'x';
+                case 'x3'
+                    sReturn = 'y';
+                case 't'
+                    sReturn = 'z';
+                otherwise
+                    sReturn = sAxis;
+            end % switch
+            
+        end % function
+
         function bReturn = fValidSlice(sSlice)
             
             switch lower(sSlice)
