@@ -36,6 +36,7 @@ classdef QPICType
         BoxOffset   = 0.0;                       % Start of the box in simulation
         XOrigin     = 0.0;                       % Position defined as 0 on the x axis
         YOrigin     = 0.0;                       % Position defined as 0 on the y axis
+        SIOptions   = {};                        % Optional settings for SI Units
 
     end % properties
     
@@ -61,9 +62,6 @@ classdef QPICType
             aXMin    = obj.Data.Config.Simulation.XMin/dLFactor;
             aXMax    = obj.Data.Config.Simulation.XMax/dLFactor;
 
-            % Set Variables
-            %obj.Translate   = Variables(sCoords);
-            
             % Read Input Parameters
             oOpt = inputParser;
             addParameter(oOpt, 'Units',     'N');
@@ -72,6 +70,8 @@ classdef QPICType
             addParameter(oOpt, 'X2Scale',   'Auto');
             addParameter(oOpt, 'X3Scale',   'Auto');
             addParameter(oOpt, 'Symmetric', 'No');
+            addParameter(oOpt, 'Tesla',     'No');
+            addParameter(oOpt, 'CurrDen',   'mm');
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
 
@@ -89,6 +89,27 @@ classdef QPICType
                 aXMin(2:3)  = aXMin(2:3) - [obj.XOrigin obj.YOrigin];
                 aXMax(2:3)  = aXMax(2:3) - [obj.XOrigin obj.YOrigin];
             end % if
+            
+            % Units for B-fields
+            if strcmpi(stOpt.Tesla,'Yes')
+                obj.SIOptions.Tesla = true;
+            else
+                obj.SIOptions.Tesla = false;
+            end % if
+            
+            % Metric Unit for Current Density (Squared)
+            switch(lower(stOpt.CurrDen))
+                case 'm'
+                    obj.SIOptions.CurrDen = 1;
+                case 'mm'
+                    obj.SIOptions.CurrDen = 2;
+                case 'µm'
+                    obj.SIOptions.CurrDen = 3;
+                case 'um'
+                    obj.SIOptions.CurrDen = 3;
+                otherwise
+                    obj.SIOptions.CurrDen = 2;
+            end % switch
 
             % Evaluate Units
             switch(lower(stOpt.Units))

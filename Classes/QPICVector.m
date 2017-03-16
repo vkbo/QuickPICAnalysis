@@ -62,6 +62,9 @@ classdef QPICVector < QPICType
             
             % Call QPICType constructor
             obj@QPICType(oData, varargin{:});
+            
+            % Values
+            dC = obj.Data.Config.Constants.SI.SpeedOfLight;
 
             % Set Field
             sVector   = lower(sVector);
@@ -97,14 +100,28 @@ classdef QPICVector < QPICType
                         obj.VectorFac  = obj.Data.Config.Convert.SI.E0;
                         obj.VectorUnit = 'V/m';
                     case 'b'
-                        obj.VectorFac  = obj.Data.Config.Convert.SI.B0;
-                        obj.VectorUnit = 'T';
+                        if obj.SIOptions.Tesla
+                            obj.VectorFac  = obj.Data.Config.Convert.SI.B0;
+                            obj.VectorUnit = 'T';
+                        else
+                            obj.VectorFac  = obj.Data.Config.Convert.SI.B0*dC;
+                            obj.VectorUnit = 'V/mc';
+                        end % if
                     case 'w'
                         obj.VectorFac  = obj.Data.Config.Convert.SI.E0;
                         obj.VectorUnit = 'V/m';
                     case 'j'
-                        obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis);
-                        obj.VectorUnit = 'A';
+                        switch(obj.SIOptions.CurrDen)
+                            case 1
+                                obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis);
+                                obj.VectorUnit = 'A/m^2';
+                            case 2
+                                obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis)*1e6;
+                                obj.VectorUnit = 'A/mm^2';
+                            case 3
+                                obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis)*1e12;
+                                obj.VectorUnit = 'A/µm^2';
+                        end % switch
                 end % switch
             end % if
             
@@ -123,9 +140,9 @@ classdef QPICVector < QPICType
                     obj.VectorShort = sprintf('W%s',sVector(2));
                     obj.VectorTex   = sprintf('W_{%s}',sVector(2));
                 case 'j'
-                    obj.VectorName  = sprintf('%s Current',sAxisName);
-                    obj.VectorShort = sprintf('J%s',sVector(3));
-                    obj.VectorTex   = sprintf('J_{%s}',sVector(3));
+                    obj.VectorName  = sprintf('%s Plasma Current Density',sAxisName);
+                    obj.VectorShort = sprintf('Jp%s',sVector(3));
+                    obj.VectorTex   = sprintf('J_{p,%s}',sVector(3));
             end % switch
 
         end % function

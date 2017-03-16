@@ -151,7 +151,7 @@ function stReturn = plotVector2D(oData, iTime, sVector, sSlice, varargin)
     title(sTitle);
     xlabel(sprintf('%s [mm]',sHAxis));
     ylabel(sprintf('%s [mm]',sVAxis));
-    title(hCol,sprintf('%s [%s]',oVec.VectorTex,sVecUnit));
+    ylabel(hCol,sprintf('%s [%s]',oVec.VectorTex,sVecUnit));
     
     hold off;
     

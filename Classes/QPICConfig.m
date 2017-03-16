@@ -509,22 +509,17 @@ classdef QPICConfig
             dDX2  = (aXMax(2) - aXMin(2))/aGrid(2);
             dDX3  = (aXMax(3) - aXMin(3))/aGrid(3);
             
-            dQFac = 1.0;                 % Factor for charge in normalised units
-            dPFac = dN0;                 % Density is relative to N0
+            dPFac = dN0;          % Density is relative to N0
+            dPFac = dPFac*dDX1;   % Scale for z cell size
+            dPFac = dPFac*dDX2;   % Scale for x cell size
+            dPFac = dPFac*dDX3;   % Scale for y cell size
 
-            dPFac = dPFac*dDX1;          % Longitudinal cell size
-            dPFac = dPFac*dDX2;          % X cell size
-            dPFac = dPFac*dDX3;          % Y cell size
-
-            dPFac = dPFac*dLFactor^3;    % Convert from normalised units to unitless
-            dPFac = dPFac*dQFac;         % Combine particle factor and charge factor
-
-            obj.Convert.Norm.ChargeFac   = dQFac;
-            obj.Convert.Norm.ParticleFac = dPFac;
-            obj.Convert.SI.ChargeFac     = dPFac*dECharge;
-            obj.Convert.SI.ParticleFac   = dPFac;
-            obj.Convert.CGS.ChargeFac    = dPFac*dEChargeCGS;
-            obj.Convert.CGS.ParticleFac  = dPFac;
+            obj.Convert.Norm.ChargeFac   = 1.0;                % Already in units of n0
+            obj.Convert.Norm.ParticleFac = dPFac/dLFactor^3;   % Particles per cell in units of c/omega_p
+            obj.Convert.SI.ChargeFac     = dPFac*dECharge;     % Charge per m^2
+            obj.Convert.SI.ParticleFac   = dPFac;              % Particles per m^2
+            obj.Convert.CGS.ChargeFac    = dPFac*dEChargeCGS;  % Charge per cm^2
+            obj.Convert.CGS.ParticleFac  = dPFac*1e-4;         % Particles per cm^2
 
             
             %
@@ -534,9 +529,9 @@ classdef QPICConfig
             aJFac    = [1.0 1.0 1.0]; % In normalised units
 
             aJFacSI  = aJFac     * dPFac*dECharge*dC;
-            aJFacSI  = aJFacSI  ./ ([dDX1 dDX2 dDX3]*dLFactor);
+            aJFacSI  = aJFacSI  ./ [dDX1 dDX2 dDX3];
             aJFacCGS = aJFac     * dPFac*dEChargeCGS*dC;
-            aJFacCGS = aJFacCGS ./ ([dDX1 dDX2 dDX3]*dLFactor);
+            aJFacCGS = aJFacCGS ./ [dDX1 dDX2 dDX3];
 
             obj.Convert.Norm.JFac = aJFac;
             obj.Convert.SI.JFac   = aJFacSI;
