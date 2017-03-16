@@ -282,7 +282,7 @@ classdef QPICType
             end % if
 
             aAxis     = obj.fGetBoxAxis(sprintf('x%d',obj.SliceAxis));
-            obj.Slice = fGetIndex(aAxis,dSlice);
+            obj.Slice = QPICTools.fGetIndex(aAxis,dSlice);
             
         end % function
 
@@ -296,27 +296,45 @@ classdef QPICType
 
         function sReturn = PlasmaPosition(obj)
 
-            sReturn = 'Unknown Position';
+            dTFac   = obj.Data.Config.Convert.SI.TimeFac;
+            dLFac   = obj.Data.Config.Convert.SI.LengthFac;
+            dSimPos = obj.Time*dTFac*dLFac;
 
-            dTFac    = obj.Data.Config.Convert.SI.TimeFac;
-            dLFac    = obj.Data.Config.Convert.SI.LengthFac;
-            
-            dSimPos  = obj.Time*dTFac;
-            dDeltaT  = dTFac*dLFac;
-            dTMag    = round(log10(dDeltaT));
-            
-            dScale = 1.0;
-            sUnit  = 'm';
-            if dTMag < -1
-                dScale = 1.0e2;
-                sUnit  = 'cm';
-            end % if
-            if dTMag < -2
-                dScale = 1.0e3;
-                sUnit  = 'mm';
-            end % if
+            [dTemp,sUnit] = QPICTools.fAutoScale(dSimPos,'m',1e-6);
+            dScale  = dTemp/dSimPos;
 
-            sReturn = sprintf('at %0.2f %s in Plasma',dSimPos*dLFac*dScale,sUnit);
+            sReturn = sprintf('z=%0.2f %s',dSimPos*dScale,sUnit);
+
+        end % function
+
+        function sReturn = SlicePosition(obj,sSlice)
+
+            dLFac  = obj.Data.Config.Convert.SI.LengthFac;
+            
+            if numel(sSlice) ~= 2
+                sSlice = '';
+            end % if
+            switch(lower(sSlice))
+                case 'xy'
+                    sSlice = '\xi';
+                case 'yx'
+                    sSlice = '\xi';
+                case 'xz'
+                    sSlice = 'y';
+                case 'zx'
+                    sSlice = 'y';
+                case 'yz'
+                    sSlice = 'x';
+                case 'zy'
+                    sSlice = 'y';
+            end % switch
+            
+            dSlice = obj.Time*dLFac;
+
+            [dTemp,sUnit] = QPICTools.fAutoScale(dSlice,'m',1e-6);
+            dScale  = dTemp/dSlice;
+
+            sReturn = sprintf('%s=%0.2f %s',sSlice,dSlice*dScale,sUnit);
 
         end % function
 

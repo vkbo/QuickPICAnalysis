@@ -110,7 +110,7 @@ function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
     dZPos  = stData.ZPos;
 
     dPeak  = max(abs(aData(:)));
-    [dTemp, sVecUnit] = fAutoScale(dPeak, oVec.VectorUnit);
+    [dTemp, sVecUnit] = QPICTools.fAutoScale(dPeak, oVec.VectorUnit);
     dScale = dTemp/dPeak;
 
     stReturn.HAxis     = stData.HAxis;
@@ -124,7 +124,7 @@ function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
     if strcmpi(stOpt.IsSubPlot, 'No')
         clf;
         if strcmpi(stOpt.AutoResize, 'On')
-            fFigureSize(gcf, stOpt.FigureSize);
+            QPICTools.fFigureSize(gcf, stOpt.FigureSize);
         end % if
         set(gcf,'Name',sprintf('%s Density (%s #%d)',oVec.VectorName,oData.Config.Name,iTime))
     else
@@ -142,13 +142,7 @@ function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
 
     hold on;
 
-    if strcmpi(stOpt.HideDump, 'No')
-        sTitle = sprintf('%s %s (%s #%d)',oVec.VectorName,oVec.PlasmaPosition,oData.Config.Name,iTime);
-    else
-        sTitle = sprintf('%s %s',oVec.VectorName,oVec.PlasmaPosition);
-    end % if
-
-    title(sTitle);
+    title(sprintf('%s at %s, %s',oVec.VectorName,oVec.PlasmaPosition,oVec.SlicePosition(sSlice)));
     xlabel(sprintf('%s [mm]',sHAxis));
     ylabel(sprintf('%s [mm]',sVAxis));
     ylabel(hCol,sprintf('%s [%s]',oVec.VectorTex,sVecUnit));
