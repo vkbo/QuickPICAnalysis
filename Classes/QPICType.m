@@ -22,10 +22,10 @@ classdef QPICType
 
     end % properties
 
-    properties(GetAccess='public', SetAccess='private')
+    properties(GetAccess='public', SetAccess='protected')
         
         Data        = {};                        % QPICData dataset
-        Config      = {};                        % Holds relevant QPICConfig data
+        Diagnostics = {};                        % Holds relevant diagnostics info
         Units       = 'N';                       % Units of axes
         AxisUnits   = {'N' 'N' 'N'};             % Units of axes
         AxisScale   = {'Auto' 'Auto' 'Auto'};    % Scale of axes
@@ -310,27 +310,36 @@ classdef QPICType
         function sReturn = SlicePosition(obj,sSlice)
 
             dLFac  = obj.Data.Config.Convert.SI.LengthFac;
+            sSlice = QPICTools.fCheckSlice(sSlice);
+            aXMax  = obj.Data.Config.Simulation.XMax;
+            aGrid  = obj.Data.Config.Simulation.Grid;
+            aDelta = aXMax ./ aGrid;
             
-            if numel(sSlice) ~= 2
-                sSlice = '';
-            end % if
-            switch(lower(sSlice))
-                case 'xy'
+            switch(sSlice)
+                case 'XY'
                     sSlice = '\xi';
-                case 'yx'
-                    sSlice = '\xi';
-                case 'xz'
-                    sSlice = 'y';
-                case 'zx'
-                    sSlice = 'y';
-                case 'yz'
+                    dSlice = obj.Diagnostics.Slices(1) + 0.5*aDelta(1);
+                case 'YZ'
                     sSlice = 'x';
-                case 'zy'
+                    dSlice = obj.Diagnostics.Slices(2) + 0.5*aDelta(2) - obj.XOrigin*dLFac;
+                case 'XZ'
                     sSlice = 'y';
+                    dSlice = obj.Diagnostics.Slices(3) + 0.5*aDelta(3) - obj.XOrigin*dLFac;
+                otherwise
+                    % 3D data
+                    switch(obj.SliceAxis)
+                        case 1
+                            sSlice = '\xi';
+                            dSlice = (obj.Slice-0.5)*aDelta(1);
+                        case 2
+                            sSlice = 'x';
+                            dSlice = (obj.Slice-0.5)*aDelta(2) - obj.XOrigin*dLFac;
+                        case 3
+                            sSlice = 'y';
+                            dSlice = (obj.Slice-0.5)*aDelta(3) - obj.YOrigin*dLFac;
+                    end % switch
             end % switch
             
-            dSlice = obj.Time*dLFac;
-
             [dTemp,sUnit] = QPICTools.fAutoScale(dSlice,'m',1e-6);
             dScale  = dTemp/dSlice;
 
@@ -528,10 +537,10 @@ classdef QPICType
             end % if
 
             % Get Limits
-            iHMin = fGetIndex(aHAxis, aHLim(1));
-            iHMax = fGetIndex(aHAxis, aHLim(2));
-            iVMin = fGetIndex(aVAxis, aVLim(1));
-            iVMax = fGetIndex(aVAxis, aVLim(2));
+            iHMin = QPICTools.fGetIndex(aHAxis, aHLim(1));
+            iHMax = QPICTools.fGetIndex(aHAxis, aHLim(2));
+            iVMin = QPICTools.fGetIndex(aVAxis, aVLim(1));
+            iVMax = QPICTools.fGetIndex(aVAxis, aVLim(2));
 
             % Crop Dataset
             aData  = aData(iVMin:iVMax,iHMin:iHMax);

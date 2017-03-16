@@ -97,8 +97,9 @@ classdef QPICVector < QPICType
             if strcmpi(obj.Units,'SI')
                 switch obj.VectorType
                     case 'e'
-                        obj.VectorFac  = obj.Data.Config.Convert.SI.E0;
-                        obj.VectorUnit = 'V/m';
+                        obj.VectorFac   = obj.Data.Config.Convert.SI.E0;
+                        obj.VectorUnit  = 'V/m';
+                        obj.Diagnostics = obj.Data.Config.Diag.EField;
                     case 'b'
                         if obj.SIOptions.Tesla
                             obj.VectorFac  = obj.Data.Config.Convert.SI.B0;
@@ -107,9 +108,11 @@ classdef QPICVector < QPICType
                             obj.VectorFac  = obj.Data.Config.Convert.SI.B0*dC;
                             obj.VectorUnit = 'V/mc';
                         end % if
+                        obj.Diagnostics = obj.Data.Config.Diag.BField;
                     case 'w'
-                        obj.VectorFac  = obj.Data.Config.Convert.SI.E0;
-                        obj.VectorUnit = 'V/m';
+                        obj.VectorFac   = obj.Data.Config.Convert.SI.E0;
+                        obj.VectorUnit  = 'V/m';
+                        obj.Diagnostics = obj.Data.Config.Diag.EField;
                     case 'j'
                         switch(obj.SIOptions.CurrDen)
                             case 1
@@ -122,6 +125,7 @@ classdef QPICVector < QPICType
                                 obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis)*1e12;
                                 obj.VectorUnit = 'A/µm^2';
                         end % switch
+                        obj.Diagnostics = obj.Data.Config.Diag.Current;
                 end % switch
             end % if
             

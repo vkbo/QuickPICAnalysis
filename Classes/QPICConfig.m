@@ -718,7 +718,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.EField.Dump      = iDump;
             obj.Diag.EField.DumpSlice = iDumpSlice;
-            obj.Diag.EField.Slices    = aSlices;
+            obj.Diag.EField.Slices    = aSlices*1e-6;
 
             %
             % B-Field Diagnostics
@@ -748,7 +748,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.BField.Dump      = iDump;
             obj.Diag.BField.DumpSlice = iDumpSlice;
-            obj.Diag.BField.Slices    = aSlices;
+            obj.Diag.BField.Slices    = aSlices*1e-6;
 
             %
             % Beam Diagnostics
@@ -778,7 +778,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.Beam.Dump      = iDump;
             obj.Diag.Beam.DumpSlice = iDumpSlice;
-            obj.Diag.Beam.Slices    = aSlices;
+            obj.Diag.Beam.Slices    = aSlices*1e-6;
 
             %
             % Plasma Diagnostics
@@ -808,7 +808,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.Plasma.Dump      = iDump;
             obj.Diag.Plasma.DumpSlice = iDumpSlice;
-            obj.Diag.Plasma.Slices    = aSlices;
+            obj.Diag.Plasma.Slices    = aSlices*1e-6;
 
             %
             % Current Diagnostics
@@ -838,7 +838,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.Current.Dump      = iDump;
             obj.Diag.Current.DumpSlice = iDumpSlice;
-            obj.Diag.Current.Slices    = aSlices;
+            obj.Diag.Current.Slices    = aSlices*1e-6;
 
             %
             % Potential Diagnostics
@@ -868,7 +868,7 @@ classdef QPICConfig
             % Save Variables
             obj.Diag.Potential.Dump      = iDump;
             obj.Diag.Potential.DumpSlice = iDumpSlice;
-            obj.Diag.Potential.Slices    = aSlices;
+            obj.Diag.Potential.Slices    = aSlices*1e-6;
             
             %
             %  Diagnostics Lists
