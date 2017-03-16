@@ -542,7 +542,7 @@ classdef QPICConfig
             % Potential Conversion
             %
             
-            dPotFac = 1/(dEMass * dC^2);
+            dPotFac = dEMass * dC^2 / dECharge;
             
             obj.Convert.Norm.PotFac = 1.0;
             obj.Convert.SI.PotFac   = dPotFac;

@@ -83,8 +83,20 @@ classdef QPICScalar < QPICType
             if strcmpi(obj.Units,'SI')
                 switch obj.ScalarType
                     case 'e'
-                        obj.ScalarFac  = obj.Data.Config.Convert.SI.ChargeFac;
-                        obj.ScalarUnit = 'C';
+                        switch(obj.SIOptions.QDensity)
+                            case 0
+                                obj.ScalarFac  = 1.0;
+                                obj.ScalarUnit = 'N_0';
+                            case 1
+                                obj.ScalarFac  = obj.Data.Config.Convert.SI.ChargeFac;
+                                obj.ScalarUnit = 'C/m^3';
+                            case 2
+                                obj.ScalarFac  = obj.Data.Config.Convert.SI.ChargeFac*1e9;
+                                obj.ScalarUnit = 'C/mm^3';
+                            case 3
+                                obj.ScalarFac  = obj.Data.Config.Convert.SI.ChargeFac*1e18;
+                                obj.ScalarUnit = 'C/µm^3';
+                        end % switch
                         if sScalar(2) == 'b'
                             obj.Diagnostics = obj.Data.Config.Diag.Beam;
                         else
@@ -139,7 +151,7 @@ classdef QPICScalar < QPICType
                 case 'e'
                     aData = obj.Data.Data(obj.Time,'Q','',obj.ScalarVar,sSlice);
                 case 'p'
-                    aData = obj.Data.Data(obj.Time,'PSI',obj.ScalarVar,'',sSlice);
+                    aData = obj.Data.Data(obj.Time,'PSI','','',sSlice);
             end % switch
             if isempty(aData)
                 fprintf(2,'QPICScalar.Density2D: No data\n');

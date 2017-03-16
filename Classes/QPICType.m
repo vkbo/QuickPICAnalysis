@@ -71,7 +71,8 @@ classdef QPICType
             addParameter(oOpt, 'X3Scale',   'Auto');
             addParameter(oOpt, 'Symmetric', 'No');
             addParameter(oOpt, 'Tesla',     'No');
-            addParameter(oOpt, 'CurrDen',   'mm');
+            addParameter(oOpt, 'JDensity',   'mm');
+            addParameter(oOpt, 'QDensity',   'n0');
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
 
@@ -98,17 +99,33 @@ classdef QPICType
             end % if
             
             % Metric Unit for Current Density (Squared)
-            switch(lower(stOpt.CurrDen))
+            switch(lower(stOpt.JDensity))
                 case 'm'
-                    obj.SIOptions.CurrDen = 1;
+                    obj.SIOptions.JDensity = 1;
                 case 'mm'
-                    obj.SIOptions.CurrDen = 2;
+                    obj.SIOptions.JDensity = 2;
                 case 'µm'
-                    obj.SIOptions.CurrDen = 3;
+                    obj.SIOptions.JDensity = 3;
                 case 'um'
-                    obj.SIOptions.CurrDen = 3;
+                    obj.SIOptions.JDensity = 3;
                 otherwise
-                    obj.SIOptions.CurrDen = 2;
+                    obj.SIOptions.JDensity = 2;
+            end % switch
+
+            % Metric Unit for Charge Density (cubed)
+            switch(lower(stOpt.QDensity))
+                case 'n0'
+                    obj.SIOptions.QDensity = 0;
+                case 'm'
+                    obj.SIOptions.QDensity = 1;
+                case 'mm'
+                    obj.SIOptions.QDensity = 2;
+                case 'µm'
+                    obj.SIOptions.QDensity = 3;
+                case 'um'
+                    obj.SIOptions.QDensity = 3;
+                otherwise
+                    obj.SIOptions.QDensity = 2;
             end % switch
 
             % Evaluate Units

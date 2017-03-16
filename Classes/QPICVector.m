@@ -114,7 +114,7 @@ classdef QPICVector < QPICType
                         obj.VectorUnit  = 'V/m';
                         obj.Diagnostics = obj.Data.Config.Diag.EField;
                     case 'j'
-                        switch(obj.SIOptions.CurrDen)
+                        switch(obj.SIOptions.JDensity)
                             case 1
                                 obj.VectorFac  = obj.Data.Config.Convert.SI.JFac(obj.VectorAxis);
                                 obj.VectorUnit = 'A/m^2';
