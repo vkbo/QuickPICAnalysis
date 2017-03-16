@@ -536,6 +536,17 @@ classdef QPICConfig
             obj.Convert.Norm.JFac = aJFac;
             obj.Convert.SI.JFac   = aJFacSI;
             obj.Convert.CGS.JFac  = aJFacCGS;
+            
+            
+            %
+            % Potential Conversion
+            %
+            
+            dPotFac = 1/(dEMass * dC^2);
+            
+            obj.Convert.Norm.PotFac = 1.0;
+            obj.Convert.SI.PotFac   = dPotFac;
+            obj.Convert.CGS.PotFac  = dPotFac;
 
         end % function
 
