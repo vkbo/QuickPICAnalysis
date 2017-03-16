@@ -1,7 +1,7 @@
 
 %
-%  Function: plotVector2D
-% ************************
+%  Function: plotQPVector2D
+% **************************
 %  Plots vector data from QuickPIC in 2D
 %
 %  Inputs:
@@ -24,7 +24,7 @@
 %  ShowOverlay :: Default Yes
 %
 
-function stReturn = plotVector2D(oData, iTime, sVector, sSlice, varargin)
+function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
 
     % Input/Output
 
@@ -32,8 +32,8 @@ function stReturn = plotVector2D(oData, iTime, sVector, sSlice, varargin)
 
     if nargin == 0
         fprintf('\n');
-        fprintf('  Function: plotVector2D\n');
-        fprintf(' ************************\n');
+        fprintf('  Function: plotQPVector2D\n');
+        fprintf(' **************************\n');
         fprintf('  Plots vector data from QuickPIC in 2D\n');
         fprintf('\n');
         fprintf('  Inputs:\n');
