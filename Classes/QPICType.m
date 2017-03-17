@@ -31,12 +31,9 @@ classdef QPICType
         AxisScale   = {'Auto' 'Auto' 'Auto'};    % Scale of axes
         AxisRange   = [0.0 0.0 0.0 0.0 0.0 0.0]; % Max and min of axes
         AxisFac     = [1.0 1.0 1.0];             % Axes scale factors
-        ParticleFac = 1.0;                       % Q-to-particles factor
-        ChargeFac   = 1.0;                       % Q-to-charge factor
-        BoxOffset   = 0.0;                       % Start of the box in simulation
-        XOrigin     = 0.0;                       % Position defined as 0 on the x axis
-        YOrigin     = 0.0;                       % Position defined as 0 on the y axis
+        Origin      = [0.0 0.0 0.0];             % Position defined as 0 on the grid axes
         SIOptions   = {};                        % Optional settings for SI Units
+        Convert     = {};                        % Holds the struct of conversion factors
 
     end % properties
     
@@ -85,10 +82,9 @@ classdef QPICType
             
             % Set Symmetric X/Y Axis
             if strcmpi(stOpt.Symmetric,'Yes')
-                obj.XOrigin = 0.5*aXMax(2);
-                obj.YOrigin = 0.5*aXMax(3);
-                aXMin(2:3)  = aXMin(2:3) - [obj.XOrigin obj.YOrigin];
-                aXMax(2:3)  = aXMax(2:3) - [obj.XOrigin obj.YOrigin];
+                obj.Origin = [0.0 0.5*aXMax(2) 0.5*aXMax(3)];
+                aXMin      = aXMin - obj.Origin;
+                aXMax      = aXMax - obj.Origin;
             end % if
             
             % Units for B-fields
@@ -134,42 +130,36 @@ classdef QPICType
                 case 'si'
                     obj.Units = 'SI';
                     
-                    [dX1Fac, sX1Unit]  = obj.fLengthScale(obj.AxisScale{1}, 'm');
-                    [dX2Fac, sX2Unit]  = obj.fLengthScale(obj.AxisScale{2}, 'm');
-                    [dX3Fac, sX3Unit]  = obj.fLengthScale(obj.AxisScale{3}, 'm');
+                    [dX1Fac, sX1Unit]  = QPICTools.fLengthScale(obj.AxisScale{1}, 'm');
+                    [dX2Fac, sX2Unit]  = QPICTools.fLengthScale(obj.AxisScale{2}, 'm');
+                    [dX3Fac, sX3Unit]  = QPICTools.fLengthScale(obj.AxisScale{3}, 'm');
                     obj.AxisFac        = [dX1Fac dX2Fac dX3Fac]*dLFactor;
                     obj.AxisUnits      = {sX1Unit, sX2Unit, sX3Unit};
                     obj.AxisRange(1:2) = [aXMin(1) aXMax(1)]*obj.AxisFac(1);
                     obj.AxisRange(3:4) = [aXMin(2) aXMax(2)]*obj.AxisFac(2);
                     obj.AxisRange(5:6) = [aXMin(3) aXMax(3)]*obj.AxisFac(3);
-                    
-                    obj.ParticleFac    = obj.Data.Config.Convert.SI.ParticleFac;
-                    obj.ChargeFac      = obj.Data.Config.Convert.SI.ChargeFac;
+                    obj.Convert        = obj.Data.Config.Convert.SI;
 
                 case 'cgs'
                     obj.Units = 'CGS';
                     
-                    [dX1Fac, sX1Unit]  = obj.fLengthScale(obj.AxisScale{1}, 'cm');
-                    [dX2Fac, sX2Unit]  = obj.fLengthScale(obj.AxisScale{2}, 'cm');
-                    [dX3Fac, sX3Unit]  = obj.fLengthScale(obj.AxisScale{3}, 'cm');
+                    [dX1Fac, sX1Unit]  = QPICTools.fLengthScale(obj.AxisScale{1}, 'cm');
+                    [dX2Fac, sX2Unit]  = QPICTools.fLengthScale(obj.AxisScale{2}, 'cm');
+                    [dX3Fac, sX3Unit]  = QPICTools.fLengthScale(obj.AxisScale{3}, 'cm');
                     obj.AxisFac        = [dX1Fac dX2Fac dX3Fac]*dLFactor;
                     obj.AxisUnits      = {sX1Unit, sX2Unit, sX3Unit};
                     obj.AxisRange(1:2) = [aXMin(1) aXMax(1)]*obj.AxisFac(1);
                     obj.AxisRange(3:4) = [aXMin(2) aXMax(2)]*obj.AxisFac(2);
                     obj.AxisRange(5:6) = [aXMin(3) aXMax(3)]*obj.AxisFac(3);
-                    
-                    obj.ParticleFac    = obj.Data.Config.Convert.CGS.ParticleFac;
-                    obj.ChargeFac      = obj.Data.Config.Convert.CGS.ChargeFac;
+                    obj.Convert        = obj.Data.Config.Convert.CGS;
 
                 otherwise
                     obj.Units = 'N';
 
-                    obj.AxisFac     = [1.0, 1.0, 1.0];
-                    obj.AxisUnits   = {'c/ω', 'c/ω', 'c/ω'};
-                    obj.AxisRange   = [aXMin(1) aXMax(1) aXMin(2) aXMax(2) aXMin(3) aXMax(3)];
-
-                    obj.ParticleFac = obj.Data.Config.Convert.Norm.ParticleFac;
-                    obj.ChargeFac   = obj.Data.Config.Convert.Norm.ChargeFac;
+                    obj.AxisFac        = [1.0, 1.0, 1.0];
+                    obj.AxisUnits      = {'c/ω', 'c/ω', 'c/ω'};
+                    obj.AxisRange      = [aXMin(1) aXMax(1) aXMin(2) aXMax(2) aXMin(3) aXMax(3)];
+                    obj.Convert        = obj.Data.Config.Convert.Norm;
 
             end % switch
 
@@ -327,110 +317,25 @@ classdef QPICType
         function sReturn = SlicePosition(obj,sSlice)
 
             dLFac  = obj.Data.Config.Convert.SI.LengthFac;
-            sSlice = QPICTools.fCheckSlice(sSlice);
             aXMax  = obj.Data.Config.Simulation.XMax;
             aGrid  = obj.Data.Config.Simulation.Grid;
             aDelta = aXMax ./ aGrid;
-            
-            switch(sSlice)
-                case 'XY'
-                    sSlice = '\xi';
-                    dSlice = obj.Diagnostics.Slices(1) + 0.5*aDelta(1);
-                case 'YZ'
-                    sSlice = 'x';
-                    dSlice = obj.Diagnostics.Slices(2) + 0.5*aDelta(2) - obj.XOrigin*dLFac;
-                case 'XZ'
-                    sSlice = 'y';
-                    dSlice = obj.Diagnostics.Slices(3) + 0.5*aDelta(3) - obj.XOrigin*dLFac;
-                otherwise
-                    % 3D data
-                    switch(obj.SliceAxis)
-                        case 1
-                            sSlice = '\xi';
-                            dSlice = (obj.Slice-0.5)*aDelta(1);
-                        case 2
-                            sSlice = 'x';
-                            dSlice = (obj.Slice-0.5)*aDelta(2) - obj.XOrigin*dLFac;
-                        case 3
-                            sSlice = 'y';
-                            dSlice = (obj.Slice-0.5)*aDelta(3) - obj.YOrigin*dLFac;
-                    end % switch
+
+            [sSlice,iDim,iOrth] = QPICTools.fCheckSlice(sSlice);
+
+            switch(iDim)
+                case 2
+                    sSlice = QPICTools.fLabelAxis(iOrth,true);
+                    dSlice = obj.Diagnostics.Slices(iOrth) + 0.5*aDelta(iOrth) - obj.Origin(iOrth)*dLFac;
+                case 3
+                    sSlice = QPICTools.fLabelAxis(obj.SliceAxis,true);
+                    dSlice = (obj.Slice-0.5)*aDelta(obj.SliceAxis) - obj.Origin(obj.SliceAxis)*dLFac;
             end % switch
             
             [dTemp,sUnit] = QPICTools.fAutoScale(dSlice,'m',1e-6);
             dScale  = dTemp/dSlice;
 
             sReturn = sprintf('%s=%0.2f %s',sSlice,dSlice*dScale,sUnit);
-
-        end % function
-
-    end % methods
-
-    %
-    % Private Methods
-    %
-    
-    methods(Access='private')
-        
-        function [dScale, sUnit] = fLengthScale(~, sToUnit, sFromUnit)
-
-            dScale = 1.0;
-            sUnit  = 'm';
-
-            if nargin < 2
-                sFromUnit = 'm';
-            end % if
-
-            switch(lower(sFromUnit))
-                case 'pm'
-                    dScale = dScale * 1.0e-12;
-                case 'å'
-                    dScale = dScale * 1.0e-10;
-                case 'nm'
-                    dScale = dScale * 1.0e-9;
-                case 'um'
-                    dScale = dScale * 1.0e-6;
-                case 'µm'
-                    dScale = dScale * 1.0e-6;
-                case 'mm'
-                    dScale = dScale * 1.0e-3;
-                case 'cm'
-                    dScale = dScale * 1.0e-2;
-                case 'm'
-                    dScale = dScale * 1.0;
-                case 'km'
-                    dScale = dScale * 1.0e3;
-            end % switch
-
-            switch(lower(sToUnit))
-                case 'pm'
-                    dScale = dScale * 1.0e12;
-                    sUnit  = 'pm';
-                case 'å'
-                    dScale = dScale * 1.0e10;
-                    sUnit  = 'Å';
-                case 'nm'
-                    dScale = dScale * 1.0e9;
-                    sUnit  = 'nm';
-                case 'um'
-                    dScale = dScale * 1.0e6;
-                    sUnit  = 'µm';
-                case 'µm'
-                    dScale = dScale * 1.0e6;
-                    sUnit  = 'µm';
-                case 'mm'
-                    dScale = dScale * 1.0e3;
-                    sUnit  = 'mm';
-                case 'cm'
-                    dScale = dScale * 1.0e2;
-                    sUnit  = 'cm';
-                case 'm'
-                    dScale = dScale * 1.0;
-                    sUnit  = 'm';
-                case 'km'
-                    dScale = dScale * 1.0e-3;
-                    sUnit  = 'km';
-            end % switch
 
         end % function
 
@@ -578,8 +483,8 @@ classdef QPICType
             
             iDumps  = obj.Data.SimData.MaxFiles;
             
-            dTFac   = obj.Data.Config.Convert.SI.TimeFac;
-            dLFac   = obj.Data.Config.Convert.SI.LengthFac;
+            dTFac   = obj.Convert.TimeFac;
+            dLFac   = obj.Convert.LengthFac;
             
             aReturn = linspace(0.0, dTFac*iDumps, iDumps)*dLFac;
             
@@ -587,31 +492,20 @@ classdef QPICType
 
         function aReturn = fGetBoxAxis(obj, sAxis)
             
-            dLFac = obj.Data.Config.Convert.SI.LengthFac;
-            sAxis = obj.fTranslateAxis(sAxis);
-
-            switch sAxis
-                case 'x1'
-                    dXMin  = obj.Data.Config.Simulation.XMin(1)/dLFac;
-                    dXMax  = obj.Data.Config.Simulation.XMax(1)/dLFac;
-                    iNX    = obj.Data.Config.Simulation.Grid(1);
-                    dScale = obj.AxisFac(1);
-                case 'x2'
-                    dXMin  = obj.Data.Config.Simulation.XMin(2)/dLFac - obj.XOrigin;
-                    dXMax  = obj.Data.Config.Simulation.XMax(2)/dLFac - obj.XOrigin;
-                    iNX    = obj.Data.Config.Simulation.Grid(2);
-                    dScale = obj.AxisFac(2);
-                case 'x3'
-                    dXMin  = obj.Data.Config.Simulation.XMin(3)/dLFac - obj.YOrigin;
-                    dXMax  = obj.Data.Config.Simulation.XMax(3)/dLFac - obj.YOrigin;
-                    iNX    = obj.Data.Config.Simulation.Grid(3);
-                    dScale = obj.AxisFac(3);
-                otherwise
-                    dXMin  = 0.0;
-                    dXMax  = 0.0;
-                    iNX    = 0;
-                    dScale = 1.0;
-            end % switch
+            dLFac     = obj.Convert.LengthFac;
+            [~,iAxis] = QPICTools.fTranslateAxis(sAxis);
+            
+            if iAxis > 0 && iAxis < 4
+                dXMin  = obj.Data.Config.Simulation.XMin(iAxis)/dLFac - obj.Origin(iAxis);
+                dXMax  = obj.Data.Config.Simulation.XMax(iAxis)/dLFac - obj.Origin(iAxis);
+                iNX    = obj.Data.Config.Simulation.Grid(iAxis);
+                dScale = obj.AxisFac(iAxis);
+            else
+                dXMin  = 0.0;
+                dXMax  = 0.0;
+                iNX    = 0;
+                dScale = 1.0;
+            end % if
 
             aReturn = linspace(dXMin, dXMax, iNX)*dScale;
             
@@ -619,8 +513,8 @@ classdef QPICType
         
         function dReturn = fGetZPos(obj)
             
-            dLFactor = obj.Data.Config.Convert.SI.LengthFac;
-            dTFactor = obj.Data.Config.Convert.SI.TimeFac;
+            dLFactor = obj.Convert.LengthFac;
+            dTFactor = obj.Convert.TimeFac;
             dReturn  = obj.Time*dTFactor*dLFactor;
             
         end % function
@@ -688,46 +582,6 @@ classdef QPICType
             
         end % function
         
-        function sReturn = fTranslateAxis(sAxis)
-            
-            switch lower(sAxis)
-                case 'x'
-                    sReturn = 'x2';
-                case 'y'
-                    sReturn = 'x3';
-                case 'z'
-                    sReturn = 'x1';
-                otherwise
-                    sReturn = sAxis;
-            end % switch
-            
-        end % function
-        
-        function sReturn = fLabelAxis(sAxis)
-            
-            switch lower(sAxis)
-                case 'x'
-                    sReturn = 'x';
-                case 'y'
-                    sReturn = 'y';
-                case 'z'
-                    sReturn = '\xi';
-                case 'r'
-                    sReturn = 'r';
-                case 'x1'
-                    sReturn = '\xi';
-                case 'x2'
-                    sReturn = 'x';
-                case 'x3'
-                    sReturn = 'y';
-                case 't'
-                    sReturn = 'z';
-                otherwise
-                    sReturn = sAxis;
-            end % switch
-            
-        end % function
-
         function bReturn = fValidSlice(sSlice)
             
             switch lower(sSlice)

@@ -272,22 +272,22 @@ classdef QPICData
             stReturn.Charge      = dBeamCharge;
             stReturn.Current     = dBeamCurrent;
 
-            [dSIMeanX1,  sUnitM1] = fAutoScale(dSIMeanX1,'m',1e-9);
-            [dSIMeanX2,  sUnitM2] = fAutoScale(dSIMeanX2,'m',1e-9);
-            [dSIMeanX3,  sUnitM3] = fAutoScale(dSIMeanX3,'m',1e-9);
+            [dSIMeanX1,  sUnitM1] = QPICTools.fAutoScale(dSIMeanX1,'m',1e-9);
+            [dSIMeanX2,  sUnitM2] = QPICTools.fAutoScale(dSIMeanX2,'m',1e-9);
+            [dSIMeanX3,  sUnitM3] = QPICTools.fAutoScale(dSIMeanX3,'m',1e-9);
 
-            [dSISigmaX1, sUnitS1] = fAutoScale(dSISigmaX1,'m',1e-9);
-            [dSISigmaX2, sUnitS2] = fAutoScale(dSISigmaX2,'m',1e-9);
-            [dSISigmaX3, sUnitS3] = fAutoScale(dSISigmaX3,'m',1e-9);
+            [dSISigmaX1, sUnitS1] = QPICTools.fAutoScale(dSISigmaX1,'m',1e-9);
+            [dSISigmaX2, sUnitS2] = QPICTools.fAutoScale(dSISigmaX2,'m',1e-9);
+            [dSISigmaX3, sUnitS3] = QPICTools.fAutoScale(dSISigmaX3,'m',1e-9);
 
-            [dSIEmittX1, sUnitE1] = fAutoScale(dSIEmittX1,'m',1e-9);
-            [dSIEmittX2, sUnitE2] = fAutoScale(dSIEmittX2,'m',1e-9);
-            [dSIEmittX3, sUnitE3] = fAutoScale(dSIEmittX3,'m',1e-9);
+            [dSIEmittX1, sUnitE1] = QPICTools.fAutoScale(dSIEmittX1,'m',1e-9);
+            [dSIEmittX2, sUnitE2] = QPICTools.fAutoScale(dSIEmittX2,'m',1e-9);
+            [dSIEmittX3, sUnitE3] = QPICTools.fAutoScale(dSIEmittX3,'m',1e-9);
             
-            [dBeamGamma,   sGammaUnit]   = fAutoScale(dBeamGamma,'');
-            [dBeamCharge,  sChargeUnit]  = fAutoScale(dBeamCharge,'C');
-            [dBeamCurrent, sCurrentUnit] = fAutoScale(dBeamCurrent,'A');
-            [dBeamNum,     sBeamNumUnit] = fAutoScale(dBeamNum,'');
+            [dBeamGamma,   sGammaUnit]   = QPICTools.fAutoScale(dBeamGamma,'');
+            [dBeamCharge,  sChargeUnit]  = QPICTools.fAutoScale(dBeamCharge,'C');
+            [dBeamCurrent, sCurrentUnit] = QPICTools.fAutoScale(dBeamCurrent,'A');
+            [dBeamNum,     sBeamNumUnit] = QPICTools.fAutoScale(dBeamNum,'');
 
             if ~obj.Silent
                 fprintf(' X1 Mean, Sigma: %8.3f %2s, %8.3f %2s\n',dSIMeanX1,sUnitM1,dSISigmaX1,sUnitS1);

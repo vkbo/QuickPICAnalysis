@@ -24,7 +24,7 @@ classdef QPICTools
             sUnit  = sBaseUnit;
 
             if abs(dBaseValue) < dMin
-                [~, sUnit] = fAutoScale(dMin,sBaseUnit);
+                [~, sUnit] = QPICTools.fAutoScale(dMin,sBaseUnit);
                 dValue = 0.0;
                 return;
             end % if
@@ -188,23 +188,216 @@ classdef QPICTools
         % *************
         %  Checks a slice entry and returns a valid QuickPIC Slice diagnostics
         
-        function sReturn = fCheckSlice(sSlice)
+        function [sReturn,iDim,iOrth] = fCheckSlice(sSlice)
             
             switch(lower(sSlice))
                 case 'xy'
                     sReturn = 'XY';
+                    iDim    = 2;
+                    iOrth   = 1;
                 case 'yx'
                     sReturn = 'XY';
+                    iDim    = 2;
+                    iOrth   = 1;
                 case 'xz'
                     sReturn = 'XZ';
+                    iDim    = 2;
+                    iOrth   = 3;
                 case 'zx'
                     sReturn = 'XZ';
+                    iDim    = 2;
+                    iOrth   = 3;
                 case 'yz'
                     sReturn = 'YZ';
+                    iDim    = 2;
+                    iOrth   = 2;
                 case 'zy'
                     sReturn = 'YZ';
+                    iDim    = 2;
+                    iOrth   = 2;
                 otherwise
                     sReturn = '';
+                    iDim    = 3;
+                    iOrth   = 0;
+            end % switch
+            
+        end % function
+
+        %  fLengthScale
+        % **************
+        %  Converts from one scale unit to another
+
+        function [dScale, sUnit] = fLengthScale(sToUnit, sFromUnit)
+
+            dScale = 1.0;
+            sUnit  = 'm';
+
+            if nargin < 2
+                sFromUnit = 'm';
+            end % if
+
+            switch lower(sFromUnit)
+                case 'pm'
+                    dScale = dScale * 1.0e-12;
+                case 'å'
+                    dScale = dScale * 1.0e-10;
+                case 'nm'
+                    dScale = dScale * 1.0e-9;
+                case 'um'
+                    dScale = dScale * 1.0e-6;
+                case 'µm'
+                    dScale = dScale * 1.0e-6;
+                case 'mm'
+                    dScale = dScale * 1.0e-3;
+                case 'cm'
+                    dScale = dScale * 1.0e-2;
+                case 'm'
+                    dScale = dScale * 1.0;
+                case 'km'
+                    dScale = dScale * 1.0e3;
+            end % switch
+
+            switch(lower(sToUnit))
+                case 'pm'
+                    dScale = dScale * 1.0e12;
+                    sUnit  = 'pm';
+                case 'å'
+                    dScale = dScale * 1.0e10;
+                    sUnit  = 'Å';
+                case 'nm'
+                    dScale = dScale * 1.0e9;
+                    sUnit  = 'nm';
+                case 'um'
+                    dScale = dScale * 1.0e6;
+                    sUnit  = 'µm';
+                case 'µm'
+                    dScale = dScale * 1.0e6;
+                    sUnit  = 'µm';
+                case 'mm'
+                    dScale = dScale * 1.0e3;
+                    sUnit  = 'mm';
+                case 'cm'
+                    dScale = dScale * 1.0e2;
+                    sUnit  = 'cm';
+                case 'm'
+                    dScale = dScale * 1.0;
+                    sUnit  = 'm';
+                case 'km'
+                    dScale = dScale * 1.0e-3;
+                    sUnit  = 'km';
+            end % switch
+
+        end % function
+
+        %  fTranslateAxis
+        % ****************
+        %  Converts an axis to the internally used axis name and number
+
+        function [sReturn,iReturn] = fTranslateAxis(vAxis)
+            
+            sAxis = num2str(vAxis);
+            
+            switch lower(sAxis)
+                case '1'
+                    sReturn = 'x1';
+                    iReturn = 1;
+                case '2'
+                    sReturn = 'x2';
+                    iReturn = 2;
+                case '3'
+                    sReturn = 'x3';
+                    iReturn = 3;
+                case '4'
+                    sReturn = 'r';
+                    iReturn = 4;
+                case 'x'
+                    sReturn = 'x2';
+                    iReturn = 2;
+                case 'y'
+                    sReturn = 'x3';
+                    iReturn = 3;
+                case 'z'
+                    sReturn = 'x1';
+                    iReturn = 1;
+                case 'x1'
+                    sReturn = 'x1';
+                    iReturn = 1;
+                case 'x2'
+                    sReturn = 'x2';
+                    iReturn = 2;
+                case 'x3'
+                    sReturn = 'x3';
+                    iReturn = 3;
+                case 'xi'
+                    sReturn = 'x1';
+                    iReturn = 1;
+                case 'r'
+                    sReturn = 'r';
+                    iReturn = 4;
+                otherwise
+                    sReturn = sAxis;
+                    iReturn = 0;
+            end % switch
+            
+        end % function
+        
+        %  fLabelAxis
+        % ************
+        %  Converts an axis name to a label
+
+        function sReturn = fLabelAxis(vAxis, bUseBox)
+            
+            sAxis = num2str(vAxis);
+            
+            if nargin < 2
+                bUseBox = true;
+            end % if
+
+            switch lower(sAxis)
+                case '1'
+                    if bUseBox
+                        sReturn = '\xi';
+                    else
+                        sReturn = 'z';
+                    end % if
+                case '2'
+                    sReturn = 'x';
+                case '3'
+                    sReturn = 'y';
+                case '4'
+                    sReturn = 'r';
+                case 'x'
+                    sReturn = 'x';
+                case 'y'
+                    sReturn = 'y';
+                case 'z'
+                    if bUseBox
+                        sReturn = '\xi';
+                    else
+                        sReturn = 'z';
+                    end % if
+                case 'r'
+                    sReturn = 'r';
+                case 'xi'
+                    if bUseBox
+                        sReturn = '\xi';
+                    else
+                        sReturn = 'z';
+                    end % if
+                case 'x1'
+                    if bUseBox
+                        sReturn = '\xi';
+                    else
+                        sReturn = 'z';
+                    end % if
+                case 'x2'
+                    sReturn = 'x';
+                case 'x3'
+                    sReturn = 'y';
+                case 't'
+                    sReturn = 'z';
+                otherwise
+                    sReturn = sAxis;
             end % switch
             
         end % function

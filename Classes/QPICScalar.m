@@ -175,7 +175,7 @@ classdef QPICScalar < QPICType
             stReturn.Data  = aData*obj.ScalarFac;
             stReturn.HAxis = aHAxis;
             stReturn.VAxis = aVAxis;
-            stReturn.Axes  = {obj.fLabelAxis(cAxes{1}) obj.fLabelAxis(cAxes{2})};
+            stReturn.Axes  = {QPICTools.fLabelAxis(cAxes{1}) QPICTools.fLabelAxis(cAxes{2})};
             stReturn.ZPos  = obj.fGetZPos();        
         
         end % function

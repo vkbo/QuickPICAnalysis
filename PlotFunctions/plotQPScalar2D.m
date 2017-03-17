@@ -22,6 +22,7 @@
 %  AutoResize  :: Default On
 %  CAxis       :: Color axis limits
 %  ShowOverlay :: Default Yes
+%  Absolute    :: Use absolute values. Default No
 %
 
 function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
@@ -55,6 +56,7 @@ function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
         fprintf('  AutoResize  :: Default On\n');
         fprintf('  CAxis       :: Color axis limits\n');
         fprintf('  ShowOverlay :: Default Yes\n');
+        fprintf('  Absolute    :: Use absolute values. Default No\n');
         fprintf('\n');
         return;
     end % if
@@ -70,6 +72,7 @@ function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
     addParameter(oOpt, 'AutoResize',  'On');
     addParameter(oOpt, 'CAxis',       []);
     addParameter(oOpt, 'ShowOverlay', 'Yes');
+    addParameter(oOpt, 'Absolute',    'No');
     parse(oOpt, varargin{:});
     stOpt = oOpt.Results;
 
@@ -98,7 +101,7 @@ function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
         return;
     end % if
 
-    aData  = abs(stData.Data);
+    aData  = stData.Data;
     aHAxis = stData.HAxis;
     aVAxis = stData.VAxis;
     sHAxis = stData.Axes{1};
@@ -115,6 +118,10 @@ function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
     stReturn.AxisFac   = oSca.AxisFac;
     stReturn.AxisRange = oSca.AxisRange;
     
+    if strcmpi(stOpt.Absolute, 'Yes')
+        aData = abs(aData);
+    end % if
+
     % Plot
     
     if strcmpi(stOpt.IsSubPlot, 'No')
