@@ -184,8 +184,18 @@ classdef QPICType
         
         function obj = set.Time(obj, iTime)
             
+            dTMax = obj.Data.Config.Simulation.TMax;
+            dDT   = obj.Data.Config.Simulation.TimeStep;
+            iTMax = floor(dTMax/dDT);
+
             if iTime < 1
+                fprintf(2,'QPICType: Invalid time %d. Minimum time is 1.\n',iTime);
                 iTime = 1;
+            end % if
+            
+            if iTime > iTMax
+                fprintf(2,'QPICType: Invalid time %d. Maxmum time is %d.\n',iTime,iTMax);
+                iTime = iTMax;
             end % if
             
             obj.Time = iTime;

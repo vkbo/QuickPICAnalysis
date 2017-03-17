@@ -335,7 +335,7 @@ classdef QPICData
                 fprintf('  iTime    :: Time dump to extract\n');
                 fprintf('  sType    :: Data type i.e. F, J, PSI, Q, RAW\n');
                 fprintf('  sSet     :: Data set i.e. EX, BY, PSI, etc\n');
-                fprintf('  sSpecies :: Particle species i.e. EB, EP01, etc or for RAW, 01, 02, etc\n');
+                fprintf('  sSpecies :: Particle species i.e. EB, EP01, etc or for RAW, EB01, EB02, etc\n');
                 fprintf('  sSlice   :: Which data slice i.e. XY, XZ or YZ or blank for 3D\n');
                 fprintf('\n');
                 return;
@@ -372,18 +372,65 @@ classdef QPICData
             end % if
 
             % Extract path
-            iIndex    = obj.SimData.Index.(sType).(sSet).(sSpecies).(sSlice);
-            sFolder   = obj.SimData.Data(iIndex).Path;
-            iFiles    = obj.SimData.Data(iIndex).Files;
+            iIndex  = obj.SimData.Index.(sType).(sSet).(sSpecies).(sSlice);
+            sFolder = obj.SimData.Data(iIndex).Path;
+            iFiles  = obj.SimData.Data(iIndex).Files;
+            
+            % Check if datafile exists
+            i2DDump = 0;
+            i3DDump = 0;
+            switch sType
+                case 'F'
+                    switch sSet(1)
+                        case 'B'
+                            i2DDump = obj.Config.Diag.BField.DumpSlice;
+                            i3DDump = obj.Config.Diag.BField.Dump;
+                        case 'E'
+                            i2DDump = obj.Config.Diag.EField.DumpSlice;
+                            i3DDump = obj.Config.Diag.EField.Dump;
+                    end % switch
+                case 'J'
+                    i2DDump = obj.Config.Diag.Current.DumpSlice;
+                    i3DDump = obj.Config.Diag.Current.Dump;
+                case 'PSI'
+                    i2DDump = obj.Config.Diag.Potential.DumpSlice;
+                    i3DDump = obj.Config.Diag.Potential.Dump;
+                case 'Q'
+                    switch sSpecies(2)
+                        case 'B'
+                            i2DDump = obj.Config.Diag.Beam.DumpSlice;
+                            i3DDump = obj.Config.Diag.Beam.Dump;
+                        case 'P'
+                            i2DDump = obj.Config.Diag.Plasma.DumpSlice;
+                            i3DDump = obj.Config.Diag.Plasma.Dump;
+                    end % switch
+                case 'RAW'
+                    i3DDump = obj.Config.Diag.RAW.TimeStep;
+            end % switch
+            if strcmpi(sSlice,'All')
+                iOff  = mod(iTime-1,i3DDump);
+                iFile = (iTime-1)/i3DDump + 1;
+            else
+                iOff = mod(iTime-1,i2DDump);
+                iFile = (iTime-1)/i2DDump + 1;
+            end % if
+            if iOff > 0
+                fprintf(2,'Warning: There is no dump for t=%d. Using t=%d instead.\n',iTime,iTime-iOff);
+                iTime = iTime - iOff;
+            end % if
+            iTMax = floor(obj.Config.Simulation.TMax/obj.Config.Simulation.TimeStep);
+            if iTime < 1 || iTime > iTMax
+                fprintf(2,'Error: Time %d is out of range. Range is 1:%d.\n',iTime,iTMax);
+                return;
+            end % if
+            if iFile > iFiles
+                fprintf(2,'Warning: There may not be enough files available.\n');
+                return;
+            end % if
+            
             sTimeNExt = sprintf('%08d', iTime);
             sFile     = ['/',strrep(sFolder,'/','-'),'_',sTimeNExt,'.h5'];
             sLoad     = [obj.Path,'/',sFolder,sFile];
-            
-            % Check if datafile exists
-            %if iTime > iFiles
-            %    fprintf(2, 'Error: Dump %d does not exist. Last dump is %d.\n', iTime, iFiles);
-            %    return;
-            %end % if
 
             % Wraps reading in a try/catch because sometimes files are corrupt even if they exist.
             try
