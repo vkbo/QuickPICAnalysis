@@ -275,6 +275,104 @@ classdef QPICBeam < QPICType
             stReturn.VAxis = linspace(dXPMin,dXPMax,stOpt.Grid(2));
             
         end % function
+
+        function stReturn = SlicedPhaseSpace(obj, varargin)
+
+            % Input/Output
+            stReturn       = {};
+            stReturn.Error = '';
+
+            % Check that the object is initialised
+            if obj.fError
+                return;
+            end % if
+
+            oOpt = inputParser;
+            addParameter(oOpt, 'Dimension', 'x');
+            addParameter(oOpt, 'Lim',       []);
+            addParameter(oOpt, 'Smooth',    4.0);
+            addParameter(oOpt, 'MinStat',   100);
+            parse(oOpt, varargin{:});
+            stOpt = oOpt.Results;
+            
+            switch lower(stOpt.Dimension)
+                case 'x'
+                    iDim = 2;
+                case 'y'
+                    iDim = 3;
+                otherwise
+                    iDim = 2;
+            end % switch
+
+            aRaw = obj.Data.Data(obj.Time,'RAW','',obj.BeamVar,'');
+            if isempty(aRaw)
+                stReturn.Error = 'No initial data.';
+                return;
+            end % if
+        
+            dLFac = obj.Convert.LengthFac;
+            dZMax = obj.Data.Config.Simulation.XMax(1);
+            iGrid = obj.Data.Config.Simulation.Grid(1);
+            dDz   = dZMax/double(iGrid)/dLFac;
+            
+            if isempty(stOpt.Lim)
+                iMinZ = 1;
+                iMaxZ = iGrid;
+            else
+                iMinZ = stOpt.Lim(1);
+                iMaxZ = stOpt.Lim(2);
+            end % if
+            
+            iNz = iMaxZ-iMinZ+1;
+            
+            aEmN = zeros(iNz,1);
+            aEmG = zeros(iNz,1);
+            aEx  = zeros(iNz,1);
+            aNP  = zeros(iNz,1);
+
+            for s=1:iNz
+
+                iZ = s+iMinZ-1;
+
+                dLMin = (iZ - stOpt.Smooth*0.5)*dDz;
+                dLMax = (iZ + stOpt.Smooth*0.5)*dDz;
+
+                aRawT = aRaw;
+                aRawT((aRawT(:,1) < dLMin | aRawT(:,1) > dLMax),:) = [];
+                aNP(s) = numel(aRawT(:,1));
+
+                if aNP(s) < stOpt.MinStat
+                    aEx(s) = 1;
+                    continue;
+                end % if
+
+                aPz  = aRawT(:,4);
+                aPx  = aRawT(:,iDim+3);
+                aX   = aRawT(:,iDim)*obj.AxisFac(iDim);
+                aX   = aX-mean(aX);
+
+                aXP  = tan(aPx./aPz)*1e3;
+                aCov = cov(aX, aXP);
+                dMPz = mean(aPz);
+                dEm  = real(sqrt(det(aCov)));
+
+                aEmG(s) = dEm;
+                aEmN(s) = dEm*dMPz;
+
+            end % for
+            
+            aAxis = obj.fGetBoxAxis('x1');
+            aAxis = aAxis(iMinZ:iMaxZ);
+            
+            stReturn.ERMS       = aEmG;
+            stReturn.ENorm      = aEmN;
+            stReturn.Axis       = aAxis;
+            stReturn.XUnit      = obj.AxisUnits{1};
+            stReturn.XPrimeUnit = 'mrad';
+            stReturn.Count      = aNP;
+            stReturn.Excluded   = aEx;
+
+        end % function
     
     end % methods
 
