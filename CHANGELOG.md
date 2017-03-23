@@ -1,6 +1,6 @@
 # QuickPIC Analysis Toolbox
 MATLAB package for analysing QuickPIC data<br>
-Current version: 0.2
+Current version: Dev0.3
 
 **Developed by:**<br>
 Veronica K. Berglyd Olsen<br>
@@ -8,6 +8,9 @@ Department of Physics<br>
 University of Oslo
 
 ## Development History
+
+### Version 0.3
+_Under Development_
 
 ### Version 0.2
 _Released 23.03.2017_
