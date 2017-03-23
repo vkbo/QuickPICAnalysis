@@ -425,7 +425,6 @@ classdef QPICData
             end % if
             if iFile > iFiles
                 fprintf(2,'Warning: There may not be enough files available.\n');
-                return;
             end % if
             
             sTimeNExt = sprintf('%08d', iTime);
