@@ -489,14 +489,35 @@ classdef QPICType
 
         end % function
         
-        function aReturn = fGetTimeAxis(obj)
+        function aReturn = fGetTimeDumps(obj,sSlice)
             
-            iDumps  = obj.Data.SimData.MaxFiles;
+            aReturn = [];
             
-            dTFac   = obj.Convert.TimeFac;
+            [~,iDim,~] = QPICTools.fCheckSlice(sSlice);
+            
+            if iDim == 2
+                iDump = obj.Diagnostics.DumpSlice;
+            else
+                iDump = obj.Diagnostics.Dump;
+            end % if
+            
+            if iDump == 0
+                return;
+            end % if
+            
+            dDT     = obj.Data.Config.Simulation.TimeStep;
+            dTMax   = obj.Data.Config.Simulation.TMax;
+            
+            iDumps  = floor(dTMax/dDT);
+            aReturn = 1:iDump:iDumps;
+            
+        end % function
+
+        function aReturn = fGetTimeAxis(obj,sSlice)
+            
             dLFac   = obj.Convert.LengthFac;
-            
-            aReturn = linspace(0.0, dTFac*iDumps, iDumps)*dLFac;
+            dDT     = obj.Data.Config.Simulation.TimeStep;
+            aReturn = double(obj.fGetTimeDumps(sSlice))*dDT*dLFac;
             
         end % function
 
