@@ -57,3 +57,11 @@ The object parses the namelists contained in the input file and extracts all sim
 A number of conversion constants are also calculated on the fly and are available in the struct named Convert. The key natural constants are also available in the struct Constants.
 
 The raw values from the input file, with its original field name, are contained in the struct Input. This tree is built directly from the input file as is. I.e. there is no guarantee the field exists or holds a default value.
+
+### Layer 2
+
+The second layer contains the datatype classes. They're structured as a QPICType superclass and three subclasses named QPICScalar for scalar grid data like charge and potential, QPICVector for vector grid data like fields and current, and QPICBeam which does calculations mainly on the raw particle phase space data.
+
+All of these classes have built in unit conversion to SI units, but by default run on normalised units. They also have axis scaling which will ensure that all the returned data is for instance returned in units of mm rather than m. The constructor takes these as MATLAB varargin inputs.
+
+Currently only some data reports have been ported from the Osiris analysisi tool. The QPICType class has automatick data slicing code for 1D and 2D, and these slices are accessible as Density2D functions for vector and scalar grid data. Currently the beam class inly calculates meittance.
