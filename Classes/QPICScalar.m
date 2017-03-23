@@ -180,36 +180,51 @@ classdef QPICScalar < QPICType
         
         end % function
 
-        function stReturn = Lineout(obj, iStart, iAverage)
+        function stReturn = Lineout(obj, sSlice, sAxis, aStart, aAverage)
 
             % Input/Output
             stReturn = {};
             
-            if nargin < 3
-                iAverage = 1;
+            if nargin < 5
+                aAverage = 1;
             end % if
             
-            if nargin < 2
-                iStart = 3;
+            if nargin < 4
+                aStart = 1;
             end % if
+
+            if nargin < 3
+                sAxis = 'Z';
+            end % if
+
+            if nargin < 2
+                sSlice = '';
+            end % if
+            
+            [sAxis,iAxis] = QPICTools.fTranslateAxis(sAxis);
             
             % Get Data and Parse it
-            aData = obj.Data.Data(obj.Time,'FLD',obj.FieldVar.Name,'');
+            switch obj.ScalarType
+                case 'e'
+                    aData = obj.Data.Data(obj.Time,'Q','',obj.ScalarVar,sSlice);
+                case 'p'
+                    aData = obj.Data.Data(obj.Time,'PSI','','',sSlice);
+            end % switch
             if isempty(aData)
+                fprintf(2,'QPICScalar.Lineout: No data\n');
                 return;
             end % if
 
-            stData = obj.fParseGridData1D(aData,iStart,iAverage);
-
+            stData = obj.fParseGridData1D(aData,sSlice,iAxis,aStart,aAverage);
             if isempty(stData)
                 return;
             end % if
 
             % Return Data
-            stReturn.Data   = stData.Data*obj.FieldFac;
+            stReturn.Data   = stData.Data*obj.ScalarFac;
             stReturn.HAxis  = stData.HAxis;
             stReturn.HRange = stData.HLim;
-            stReturn.VRange = stData.VLim;
+            stReturn.Axis   = sAxis;
             stReturn.ZPos   = obj.fGetZPos();        
         
         end % function

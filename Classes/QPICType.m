@@ -357,67 +357,75 @@ classdef QPICType
     
     methods(Access='protected')
         
-        function stReturn = fParseGridData1D(obj, aData, iStart, iAverage)
+        function stReturn = fParseGridData1D(obj, aData, sSlice, iAxis, aStart, aAverage)
 
             % Input/Output
             stReturn = {};
             
-            iDim       = ndims(aData);
-            iSliceAxis = obj.SliceAxis;
+            [sAxes,iDim,iOrth] = QPICTools.fCheckSlice(sSlice);
+            [sAxis,~]          = QPICTools.fTranslateAxis(iAxis);
             
-            switch iSliceAxis
-                case 1
-                    sHAxis = 'x2';
-                    sVAxis = 'x3';
-                    aHAxis = obj.fGetBoxAxis('x2');
-                    aVAxis = obj.fGetBoxAxis('x3');
-                    aHLim  = [obj.X2Lim(1)*obj.AxisFac(2), obj.X2Lim(2)*obj.AxisFac(2)];
-                    aVLim  = [obj.X3Lim(1)*obj.AxisFac(3), obj.X3Lim(2)*obj.AxisFac(3)];
-                case 2
-                    sHAxis = 'x1';
-                    sVAxis = 'x3';
-                    aHAxis = obj.fGetBoxAxis('x1');
-                    aVAxis = obj.fGetBoxAxis('x3');
-                    aHLim  = [obj.X1Lim(1)*obj.AxisFac(1), obj.X1Lim(2)*obj.AxisFac(1)];
-                    aVLim  = [obj.X3Lim(1)*obj.AxisFac(3), obj.X3Lim(2)*obj.AxisFac(3)];
-                case 3
-                    sHAxis = 'x1';
-                    sVAxis = 'x2';
-                    aHAxis = obj.fGetBoxAxis('x1');
-                    aVAxis = obj.fGetBoxAxis('x2');
-                    aHLim  = [obj.X1Lim(1)*obj.AxisFac(1), obj.X1Lim(2)*obj.AxisFac(1)];
-                    aVLim  = [obj.X2Lim(1)*obj.AxisFac(2), obj.X2Lim(2)*obj.AxisFac(2)];
-            end % switch
-
-            if iDim == 3
-                switch iSliceAxis
-                    case 1
-                        aData  = squeeze(aData(obj.Slice,:,:));
-                    case 2
-                        aData  = squeeze(aData(:,obj.Slice,:));
-                    case 3
-                        aData  = squeeze(aData(:,:,obj.Slice));
-                end % switch
+            if iOrth == iAxis && iOrth > 0
+                fprintf(2,'Error: The selected axis does not exist in the data\n');
+                return;
             end % if
             
-            % Get H-Limits
-            iHMin  = fGetIndex(aHAxis, aHLim(1));
-            iHMax  = fGetIndex(aHAxis, aHLim(2));
+            aHAxis = obj.fGetBoxAxis(sAxis);
+            switch iAxis
+                case 1
+                    aHLim  = obj.X1Lim*obj.AxisFac(1);
+                case 2
+                    aHLim  = obj.X2Lim*obj.AxisFac(2);
+                case 3
+                    aHLim  = obj.X3Lim*obj.AxisFac(3);
+            end % switch
+            iHMin = fGetIndex(aHAxis, aHLim(1));
+            iHMax = fGetIndex(aHAxis, aHLim(2));
             
-            % Get V-Limits
-            iVN    = numel(aVAxis);
+            if iDim == 2
+                
+                iS = aStart(1);
+                iA = aAverage(1);
+                iE = iS + iA - 1;
+                
+                [~,iXA] = QPICTools.fTranslateAxis(sAxes(1));
+                if iXA == iAxis
+                    aData = mean(aData(iHMin:iHMax,iS:iE),2);
+                else
+                    aData = mean(aData(iS:iE,iHMin:iHMax),1)';
+                end % if
+                
+            else
+                
+                if numel(aStart) > 1
+                    aS = aStart(1:2);
+                    aA = aAverage(1:2);
+                else
+                    aS = [aStart(1)   aStart(1)];
+                    aA = [aAverage(1) aAverage(1)];
+                end % if
+                aE = aS + aA - 1;
+                
+                switch iAxis
+                    case 1
+                        aData = aData(aS(1):aE(1),aS(2):aE(2),iHMin:iHMax);
+                    case 2
+                        aData = aData(iHMin:iHMax,aS(1):aE(1),aS(2):aE(2));
+                        aData = permute(aData, [2 3 1]);
+                    case 3
+                        aData = aData(aS(1):aE(1),iHMin:iHMax,aS(2):aE(2));
+                        aData = permute(aData, [1 3 2]);
+                end % switch
+                aData = reshape(aData,[],size(aData,3),1);
+                aData = mean(aData,1)';
 
-            % Crop Dataset
-            iEnd   = iStart+iAverage-1;
-            aData  = squeeze(mean(aData(iHMin:iHMax,iStart:iEnd),2));
-            aHAxis = aHAxis(iHMin:iHMax);
+            end % if
             
             % Return Data
             stReturn.Data  = aData;
-            stReturn.HAxis = aHAxis;
+            stReturn.HAxis = aHAxis(iHMin:iHMax);
             stReturn.HLim  = [iHMin iHMax];
-            stReturn.VLim  = [aVAxis(iStart) aVAxis(iEnd+1)];
-            stReturn.Axes  = {sHAxis,sVAxis};
+            stReturn.Axis  = sAxis;
 
         end % function
         
