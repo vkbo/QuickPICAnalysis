@@ -141,7 +141,7 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     plot(aAxis,aQEP);
 
     xlabel('\xi - \mu_{b,0} [µm]');
-    ylabel(sprintf('|N_b/N_0| & |%d \\times N_p/N_0|',dPFac));
+    ylabel('|N_{b,p}/N_0|');
 
     yyaxis right;
     stairs(aAxis,aEmitt);
@@ -152,8 +152,14 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     title(sprintf('Charge Density and %s-Emittance at %s',upper(sAxis),oEB.PlasmaPosition));
     
     cLegend{1} = 'N_b';
-    cLegend{2} = 'N_p';        %sprintf('N_p \\times %d',dPFac);
-    cLegend{3} = '\epsilon_N'; %sprintf('\\epsilon_N(\\xi \\pm %.1f\\times\\deltaz)',0.5*dAvg);
+    cLegend{2} = 'N_p';
+    if dPFac > 1.0
+        cLegend{2} = sprintf('N_p \\times %d',dPFac);
+    end % if
+    if dPFac < 0.0
+        cLegend{2} = sprintf('N_p / %d',1/dPFac);
+    end % if
+    cLegend{3} = sprintf('\\epsilon_N(\\xi \\pm %d\\times\\deltaz)',0.5*dAvg);
     legend(cLegend,'Location','NW');
 
     xlim([aAxis(1) aAxis(end)]);
