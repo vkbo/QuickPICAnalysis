@@ -153,13 +153,15 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     
     cLegend{1} = 'N_b';
     cLegend{2} = 'N_p';
+    cLegend{3} = '\epsilon_N(\xi)';
+
     if dPFac > 1.0
-        cLegend{2} = sprintf('N_p \\times %d',dPFac);
+        cLegend{2} = sprintf('%d·N_p',dPFac);
     end % if
     if dPFac < 0.0
-        cLegend{2} = sprintf('N_p / %d',1/dPFac);
+        cLegend{2} = sprintf('N_p/%d',1/dPFac);
     end % if
-    cLegend{3} = sprintf('\\epsilon_N(\\xi \\pm %d\\times\\deltaz)',0.5*dAvg);
+    
     legend(cLegend,'Location','NW');
 
     xlim([aAxis(1) aAxis(end)]);
