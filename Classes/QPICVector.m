@@ -69,7 +69,7 @@ classdef QPICVector < QPICType
             % Set Field
             sVector   = lower(sVector);
             sAxisName = '';
-            cValid    = {'ex','ey','ez','bx','by','bz','wr','wz','jpx','jpy','jpz'};
+            cValid    = {'ex','ey','ez','bx','by','bz','wx','wy','wz','wr','jpx','jpy','jpz'};
             if sum(ismember(sVector, cValid)) == 1
                 obj.VectorVar  = sVector;
                 obj.VectorType = sVector(1);
@@ -177,8 +177,22 @@ classdef QPICVector < QPICType
                 case 'j'
                     aData = obj.Data.Data(obj.Time,'J',obj.VectorVar,'',sSlice);
                 case 'w'
-                    fprintf(2,'QPICVector.Density2D: For wakefields use Wakefield2D instead.\n');
-                    return;
+                    switch obj.VectorVar
+                        case 'wz'
+                            aE    = obj.Data.Data(obj.Time,'F','EZ','',sSlice);
+                            aData = aE;
+                        case 'wr'
+                            switch sSlice
+                                case 'XZ'
+                                    aE    = obj.Data.Data(obj.Time,'F','EX','','XZ');
+                                    aB1   = obj.Data.Data(obj.Time,'F','BY','','XZ');
+                                    aData = aE - aB1;
+                                case 'YZ'
+                                    aE    = obj.Data.Data(obj.Time,'F','EY','','YZ');
+                                    aB1   = obj.Data.Data(obj.Time,'F','BX','','YZ');
+                                    aData = aE + aB1;
+                            end % switch
+                    end % switch
             end % switch
             if isempty(aData)
                 fprintf(2,'QPICVector.Density2D: No data\n');
@@ -268,10 +282,49 @@ classdef QPICVector < QPICType
                         
         end % function
 
-        function stReturn = WFLineout(obj, sSlice, iStart, iAverage)
+        function stReturn = WFLineout(obj, sSlice, sAxis, aStart, aAverage)
 
             % Input/Output
             stReturn = {};
+            
+            if nargin < 5
+                aAverage = 1;
+            end % if
+            
+            if nargin < 4
+                aStart = 1;
+            end % if
+
+            if nargin < 3
+                sAxis = 'Z';
+            end % if
+
+            if nargin < 2
+                sSlice = '';
+            end % if
+            
+            [sAxis,iAxis] = QPICTools.fTranslateAxis(sAxis);
+            
+            if obj.VectorType ~= 'w'
+                fprintf(2,'QPICVector.WFLineout: For non-wakefields use Lineout instead.\n');
+                return;
+            end % if
+            
+            switch obj.VectorVar
+            end % switch
+
+            % Get Data and Parse it
+            stData = obj.fParseGridData1D(aData,sSlice,iAxis,aStart,aAverage);
+            if isempty(stData)
+                return;
+            end % if
+
+            % Return Data
+            stReturn.Data   = stData.Data*obj.ScalarFac;
+            stReturn.HAxis  = stData.HAxis;
+            stReturn.HRange = stData.HLim;
+            stReturn.Axis   = sAxis;
+            stReturn.ZPos   = obj.fGetZPos();        
           
         end % function
         

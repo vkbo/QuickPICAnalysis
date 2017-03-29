@@ -290,8 +290,10 @@ classdef QPICBeam < QPICType
             oOpt = inputParser;
             addParameter(oOpt, 'Dimension', 'x');
             addParameter(oOpt, 'Lim',       []);
+            addParameter(oOpt, 'EmitTol',   5.0);
             addParameter(oOpt, 'Smooth',    4.0);
             addParameter(oOpt, 'MinStat',   100);
+            addParameter(oOpt, 'ReturnInc', 'No');
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
             
@@ -309,11 +311,19 @@ classdef QPICBeam < QPICType
                 stReturn.Error = 'No initial data.';
                 return;
             end % if
+            [iNR,~] = size(aRaw);
         
             dLFac = obj.Convert.LengthFac;
+            dMass = obj.BeamConf.Mass;
+            dSimQ = obj.BeamConf.SimCharge*double(obj.Data.Config.Diag.RAW.Sample);
+            dEmit = obj.BeamConf.Emittance(iDim);
+            dMe   = obj.Data.Config.Constants.EV.ElectronMass;
             dZMax = obj.Data.Config.Simulation.XMax(1);
             iGrid = obj.Data.Config.Simulation.Grid(1);
             dDz   = dZMax/double(iGrid)/dLFac;
+            
+            dEmit = dEmit*1e3*obj.AxisFac(iDim)/dLFac;
+            dEMax = dEmit*(1+stOpt.EmitTol/100);
             
             if isempty(stOpt.Lim)
                 iMinZ = 1;
@@ -323,22 +333,29 @@ classdef QPICBeam < QPICType
                 iMaxZ = stOpt.Lim(2);
             end % if
             
-            iNz = iMaxZ-iMinZ+1;
+            iNz   = iMaxZ-iMinZ+1;
             
-            aEmN = zeros(iNz,1);
-            aEmG = zeros(iNz,1);
-            aEx  = zeros(iNz,1);
-            aNP  = zeros(iNz,1);
-
+            aEmN  = zeros(iNz,1);
+            aEmG  = zeros(iNz,1);
+            aMom  = zeros(iNz,1);
+            aEx   = zeros(iNz,1);
+            aNP   = zeros(iNz,1);
+            aCut  = ~false(iNR,1);
+            
             for s=1:iNz
 
                 iZ = s+iMinZ-1;
 
-                dLMin = (iZ - stOpt.Smooth*0.5)*dDz;
-                dLMax = (iZ + stOpt.Smooth*0.5)*dDz;
+                dCMin  = (iZ - 0.5)*dDz;
+                dCMax  = (iZ + 0.5)*dDz;
+                aIndC  = aRaw(:,1) > dCMin & aRaw(:,1) < dCMax;
 
-                aRawT = aRaw;
-                aRawT((aRawT(:,1) < dLMin | aRawT(:,1) > dLMax),:) = [];
+                dLMin  = (iZ - 0.5*stOpt.Smooth)*dDz;
+                dLMax  = (iZ + 0.5*stOpt.Smooth)*dDz;
+
+                aRawT  = aRaw;
+                aInd   = (aRawT(:,1) < dLMin | aRawT(:,1) > dLMax);
+                aRawT(aInd,:) = [];
                 aNP(s) = numel(aRawT(:,1));
 
                 if aNP(s) < stOpt.MinStat
@@ -346,18 +363,23 @@ classdef QPICBeam < QPICType
                     continue;
                 end % if
 
-                aPz  = aRawT(:,4);
-                aPx  = aRawT(:,iDim+3);
-                aX   = aRawT(:,iDim)*obj.AxisFac(iDim);
-                aX   = aX-mean(aX);
+                aPz   = aRawT(:,4);
+                aPx   = aRawT(:,iDim+3);
+                aX    = aRawT(:,iDim)*obj.AxisFac(iDim);
+                aX    = aX-mean(aX);
 
-                aXP  = tan(aPx./aPz)*1e3;
-                aCov = cov(aX, aXP);
-                dMPz = mean(aPz);
-                dEm  = real(sqrt(det(aCov)));
+                aXP   = tan(aPx./aPz)*1e3;
+                aCov  = cov(aX, aXP);
+                dMPz  = mean(aPz);
+                dEm   = real(sqrt(det(aCov)));
+
+                if dEm*dMPz > dEMax
+                    aCut(aIndC) = false;
+                end % if
 
                 aEmG(s) = dEm;
                 aEmN(s) = dEm*dMPz;
+                aMom(s) = dMPz;
 
             end % for
             
@@ -369,8 +391,33 @@ classdef QPICBeam < QPICType
             stReturn.Axis       = aAxis;
             stReturn.XUnit      = obj.AxisUnits{1};
             stReturn.XPrimeUnit = 'mrad';
+            stReturn.Momentum   = real(sqrt(aMom.^2 - 1))*dMass*dMe;
+            stReturn.MeanMom    = sqrt(mean(aRaw(:,4))^2 - 1)*dMass*dMe;
+            stReturn.MomUnit    = 'eV/c';
             stReturn.Count      = aNP;
             stReturn.Excluded   = aEx;
+            stReturn.ETolerance = dEMax;
+            stReturn.TotCharge  = iNR*dSimQ;
+            stReturn.TolCharge  = sum(aCut)*dSimQ;
+            stReturn.ChargeUnit = 'C';
+            
+            if strcmpi(stOpt.ReturnInc, 'Yes')
+                aInc  = aRaw(aCut,:);
+
+                aPz   = aInc(:,4);
+                aPx   = aInc(:,iDim+3);
+                aX    = aInc(:,iDim)*obj.AxisFac(iDim);
+                aX    = aX-mean(aX);
+
+                aXP   = tan(aPx./aPz)*1e3;
+                aCov  = cov(aX, aXP);
+                dMPz  = mean(aPz);
+                dEm   = real(sqrt(det(aCov)));
+
+                stReturn.Included = aCut;
+                stReturn.IncMom   = dMPz;
+                stReturn.IncEmit  = dEm*dMPz;
+            end % if
 
         end % function
     

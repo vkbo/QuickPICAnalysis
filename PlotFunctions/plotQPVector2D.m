@@ -90,12 +90,7 @@ function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
         oVec.X2Lim = stOpt.Limits(3:4);
     end % if
     
-    if sVector(1) == 'w'
-        stData = oVec.Wakefield2D(sSlice);
-    else
-        stData = oVec.Density2D(sSlice);
-    end % if
-
+    stData = oVec.Density2D(sSlice);
     if isempty(stData)
         fprintf(2, 'Error: No data.\n');
         stReturn.Error = 'No data';

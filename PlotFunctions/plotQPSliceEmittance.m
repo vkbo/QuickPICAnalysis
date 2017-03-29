@@ -35,9 +35,10 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
 
     oOpt = inputParser;
     addParameter(oOpt, 'Scan',        5.0);
+    addParameter(oOpt, 'EmitTol',     5.0);
     addParameter(oOpt, 'Smooth',      4.0);
     addParameter(oOpt, 'MinStat',     100);
-    addParameter(oOpt, 'FigureSize',  [900 500]);
+    addParameter(oOpt, 'FigureSize',  [900 650]);
     addParameter(oOpt, 'IsSubPlot',   'No');
     addParameter(oOpt, 'AutoResize',  'On');
     addParameter(oOpt, 'Absolute',    'Yes');
@@ -48,22 +49,15 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
         case 'x'
             sAxis  = 'x';
             sSlice = 'XZ';
-            iXDim  = 2;
-            iPDim  = 5;
         case 'y'
             sAxis  = 'y';
             sSlice = 'YZ';
-            iXDim  = 3;
-            iPDim  = 6;
         otherwise
             fprintf(2,'Error: Invalid axis. Must be x or y.\n');
             return;
     end % switch
 
     sBeam  = sprintf('Beam%02d',iBeam);
-    dScan  = stOpt.Scan;
-    dAvg   = stOpt.Smooth;
-    iMinS  = stOpt.MinStat;
 
     dLFac  = oData.Config.Convert.SI.LengthFac;
     dDT    = oData.Config.Simulation.TimeStep;
@@ -97,8 +91,8 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     end % if
     
     % Crop Datasets
-    iMinZ  = round((dPos - dSz*dScan)/dDz);
-    iMaxZ  = round((dPos + dSz*dScan)/dDz);
+    iMinZ  = round((dPos - dSz*stOpt.Scan)/dDz);
+    iMaxZ  = round((dPos + dSz*stOpt.Scan)/dDz);
 
     aQEB   = aQEB(iMinZ:iMaxZ);
     aQEP   = aQEP(iMinZ:iMaxZ);
@@ -110,12 +104,31 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     % Emittance
     
     oBeam  = QPICBeam(oData,iBeam,'Units','SI','Scale','mm');
-    stData = oBeam.SlicedPhaseSpace('Dimension',sAxis,'Lim',[iMinZ iMaxZ],'Smooth',stOpt.Smooth,'MinStat',stOpt.MinStat);
+    oBeam.Time = iTime;
+
+    stData = oBeam.SlicedPhaseSpace('Dimension',sAxis,'Lim',[iMinZ iMaxZ], ...
+                                    'Smooth',stOpt.Smooth,'MinStat',stOpt.MinStat, ...
+                                    'EmitTol',stOpt.EmitTol);
     
     aEmitt = stData.ENorm;
     aExcl  = stData.Excluded;
+    aMom   = stData.Momentum;
+    dMMom  = stData.MeanMom;
+    dEMax  = stData.ETolerance;
+    dQTot  = stData.TotCharge;
+    dQInc  = stData.TolCharge;
     
-    iExcl = sum(aExcl);
+    dMMax  = max(abs(aMom));
+    [dTemp,sMomUnit] = QPICTools.fAutoScale(dMMax,stData.MomUnit);
+    aMom   = aMom*dTemp/dMMax;
+    dMMom  = dMMom*dTemp/dMMax;
+    
+    [dTemp,sQUnit] = QPICTools.fAutoScale(dQTot,stData.ChargeUnit);
+    dQInc  = dQInc*dTemp/dQTot;
+    dQTot  = dTemp;
+    dQRat  = dQInc/dQTot;
+    
+    iExcl  = sum(aExcl);
     if iExcl > 0
         fprintf(2,'Warning: %d slices were excluded from emittance calculation due to low statistics.\n',iExcl);
     end % if
@@ -132,7 +145,10 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     else
         cla;
     end % if
-
+    
+    % Density and Emittance Plot
+    
+    subplot(4,1,1:3);
 
     hold on;
 
@@ -140,11 +156,14 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     plot(aAxis,aQEB);
     plot(aAxis,aQEP);
 
-    xlabel('\xi - \mu_{b,0} [µm]');
     ylabel('|N_{b,p}/N_0|');
 
     yyaxis right;
     stairs(aAxis,aEmitt);
+    plot(aAxis,ones(numel(aEmitt),1)*dEMax);
+    
+    text(aAxis(5),dEMax,sprintf('Lim = %.2f µm\nQ_b = %.2f %s [%.1f %%]',dEMax,dQInc,sQUnit,100*dQRat));
+
     ylabel('\epsilon_N [µm]');
     
     hold off;
@@ -154,6 +173,7 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     cLegend{1} = 'N_b';
     cLegend{2} = 'N_p';
     cLegend{3} = '\epsilon_N(\xi)';
+    %cLegend{4} = sprintf('Q_b = %.2f %s',dQInc,sQUnit);
 
     if dPFac > 1.0
         cLegend{2} = sprintf('%d·N_p',dPFac);
@@ -165,5 +185,24 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     legend(cLegend,'Location','NW');
 
     xlim([aAxis(1) aAxis(end)]);
+    
+    % Forward Momentum Plot
+    
+    subplot(4,1,4);
+    
+    aCol = get(gca,'colororder');
+
+    hold on;
+    
+    plot(aAxis,aMom,'Color',aCol(1,:));
+    plot(aAxis,ones(numel(aMom),1)*dMMom,'Color',aCol(1,:),'LineStyle','--');
+    
+    hold off;
+    
+    xlabel('\xi - \mu_{b,0} [µm]');
+    ylabel(sprintf('P_z [%s]',sMomUnit));
+
+    xlim([aAxis(1) aAxis(end)]);
+    ylim([0.9*min(aMom(aMom > 0)) 1.1*max(aMom)]);
 
 end % function
