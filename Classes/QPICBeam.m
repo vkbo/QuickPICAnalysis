@@ -110,8 +110,8 @@ classdef QPICBeam < QPICType
         
         function stReturn = PhaseSpace(obj, varargin)
             %
-            %  Function: QPICPhaseSpace.PhaseSpace
-            % *************************************
+            %  Function: QPICBeam.PhaseSpace
+            % *******************************
             %
             %  Options:
             % ==========
@@ -277,6 +277,27 @@ classdef QPICBeam < QPICType
         end % function
 
         function stReturn = SlicedPhaseSpace(obj, varargin)
+            %
+            %  Function: QPICBeam.SlicedPhaseSpace
+            % *************************************
+            %  Scans a beam slice by slice and evaluate emittance per slice.
+            %
+            %  Options:
+            % ==========
+            %  Dimension [X/Y]
+            %          Which axis to evaluate emittance for
+            %  Lim [2-vector, integer]
+            %          The grid limits for the scan
+            %  EmitTol [double]
+            %          Maximum emittance growth accepted in %
+            %  Smooth [double]
+            %          Use a moving window for emittance calculation. Improves statistics. Units of delta Z
+            %  MinStat [integer]
+            %          Minumum number of macroparticls to accept for emittance calculation
+            %  ReturnInc [Yes/No]
+            %          Return the Nx6 dimension phasespace data for the particles which have a slice emiitance lower
+            %          than the defined limit
+            %
 
             % Input/Output
             stReturn       = {};
@@ -340,8 +361,13 @@ classdef QPICBeam < QPICType
             aMom  = zeros(iNz,1);
             aEx   = zeros(iNz,1);
             aNP   = zeros(iNz,1);
-            aCut  = ~false(iNR,1);
             
+            % Define absolute outer limits
+            dMinZ = (iMinZ - 0.5)*dDz;
+            dMaxZ = (iMaxZ + 0.5)*dDz;
+            aCut  = aRaw(:,1) > dMinZ & aRaw(:,1) < dMaxZ;
+
+            % Loop over slices
             for s=1:iNz
 
                 iZ = s+iMinZ-1;
@@ -386,6 +412,8 @@ classdef QPICBeam < QPICType
             aAxis = obj.fGetBoxAxis('x1');
             aAxis = aAxis(iMinZ:iMaxZ);
             
+            % Return Data
+            
             stReturn.ERMS       = aEmG;
             stReturn.ENorm      = aEmN;
             stReturn.Axis       = aAxis;
@@ -418,6 +446,51 @@ classdef QPICBeam < QPICType
                 stReturn.IncMom   = dMPz;
                 stReturn.IncEmit  = dEm*dMPz;
             end % if
+
+        end % function
+        
+        function stReturn = ScanMomentum(obj, aRaw, varargin)
+
+            % Input/Output
+            stReturn       = {};
+            stReturn.Error = '';
+
+            % Check that the object is initialised
+            if obj.fError
+                return;
+            end % if
+
+            oOpt = inputParser;
+            addParameter(oOpt, 'Dimension', 'x');
+            addParameter(oOpt, 'Tolerance', 3.0);
+            parse(oOpt, varargin{:});
+            stOpt = oOpt.Results;
+            
+            switch lower(stOpt.Dimension)
+                case 'x'
+                    iDim = 2;
+                case 'y'
+                    iDim = 3;
+                otherwise
+                    iDim = 2;
+            end % switch
+
+            % If no data specified, load it
+            if isempty(aRaw)
+                aRaw = obj.Data.Data(obj.Time,'RAW','',obj.BeamVar,'');
+            end % if
+            % If still no data, there is nothing to do
+            if isempty(aRaw)
+                stReturn.Error = 'No initial data.';
+                return;
+            end % if
+            [iNR,~] = size(aRaw);
+            
+            % Variables
+            dMass = obj.BeamConf.Mass;
+            dSimQ = obj.BeamConf.SimCharge*double(obj.Data.Config.Diag.RAW.Sample);
+            
+            
 
         end % function
     
