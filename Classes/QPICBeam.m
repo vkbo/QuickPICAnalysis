@@ -442,7 +442,7 @@ classdef QPICBeam < QPICType
                 dMPz  = mean(aPz);
                 dEm   = real(sqrt(det(aCov)));
 
-                stReturn.Included = aCut;
+                stReturn.Included = aInc;
                 stReturn.IncMom   = dMPz;
                 stReturn.IncEmit  = dEm*dMPz;
             end % if
@@ -461,8 +461,11 @@ classdef QPICBeam < QPICType
             end % if
 
             oOpt = inputParser;
-            addParameter(oOpt, 'Dimension', 'x');
-            addParameter(oOpt, 'Tolerance', 3.0);
+            addParameter(oOpt, 'Dimension',  'x');
+            addParameter(oOpt, 'Tolerance',  3.0);
+            addParameter(oOpt, 'Resolution', 0.0);
+            addParameter(oOpt, 'MinStat',    100);
+            addParameter(oOpt, 'PruneTail',  100);
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
             
@@ -490,7 +493,48 @@ classdef QPICBeam < QPICType
             dMass = obj.BeamConf.Mass;
             dSimQ = obj.BeamConf.SimCharge*double(obj.Data.Config.Diag.RAW.Sample);
             
+            % Prepare Dataset
+            aPz    = sort(aRaw(:,4));
+            aPz    = aPz(stOpt.PruneTail:end);
             
+            dPMin  = min(aPz);
+            dPMax  = max(aPz);
+            dPSpan = dPMax-dPMin;
+
+            if stOpt.Resolution > 0.0
+                dRes = stOpt.Resolution;
+            else
+                dRes = dPSpan/100;
+            end % if
+            
+            iNz = ceil(dPSpan/dRes);
+
+            aEx = zeros(iNz,1);
+            aNP = zeros(iNz,1);
+            aSP = zeros(iNz,1);
+            aMP = zeros(iNz,1);
+            
+            for s=1:iNz
+                
+                dLMin = dPMin + (s-1)*dRes;
+                dLMax = dPMin +  s   *dRes;
+                
+                aPS    = aPz;
+                aInd   = (aPS < dLMin | aPS > dLMax);
+                aPS(aInd) = [];
+                aNP(s) = numel(aPS);
+                aSP(s) = sqrt(std(aPS)^2 - 1)*dMass;
+                aMP(s) = sqrt(mean(aPS)^2 - 1)*dMass;
+
+                if aNP(s) < stOpt.MinStat
+                    aEx(s) = 1;
+                    continue;
+                end % if
+                
+                fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.2f pC, σP = %4.2f MeV/c [%5.3f %%]\n', ...
+                        dLMin,dLMax,aNP(s),aNP(s)*dSimQ*1e12,aSP(s),100*aSP(s)/aMP(s));
+
+            end % for
 
         end % function
     

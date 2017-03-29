@@ -75,7 +75,6 @@ classdef QPICProcess
             % 1D, 0th Order
             if iDim == 1 && iOrder == 0
 
-                tic
                 aDeposit = zeros(aGrid,1);
                 dDX = aDX(1);
 
@@ -83,14 +82,12 @@ classdef QPICProcess
                     iPos = round(aData(n)/dDX)+1;
                     aDeposit(iPos) = aDeposit(iPos) + aWeights(n);
                 end % for
-                toc
 
             end % if
             
             % 2D, 0th Order
             if iDim == 2 && iOrder == 0
 
-                tic
                 aDeposit = zeros(aGrid);
                 dDX1 = aDX(1);
                 dDX2 = aDX(2);
@@ -100,14 +97,12 @@ classdef QPICProcess
                     iPos2 = round(aData(n,2)/dDX2)+1;
                     aDeposit(iPos1,iPos2) = aDeposit(iPos1,iPos2) + aWeights(n);
                 end % for
-                toc
 
             end % if
 
             % 1D, 1st Order
             if iDim == 1 && iOrder == 1
 
-                tic
                 aDeposit = zeros(aGrid+1,1);
                 dDX = aDX(1);
 
@@ -119,14 +114,12 @@ classdef QPICProcess
                     aDeposit(iPos+1) = aDeposit(iPos+1) + dRem*aWeights(n);
                 end % for
                 aDeposit = aDeposit(1:end-1);
-                toc
 
             end % if
            
             % 2D, 1st Order
             if iDim == 2 && iOrder == 1
 
-                tic
                 aDeposit = zeros(aGrid(1)+1,aGrid(2)+1);
                 dDX1 = aDX(1);
                 dDX2 = aDX(2);
@@ -144,7 +137,6 @@ classdef QPICProcess
                     aDeposit(iPos1+1, iPos2+1) = aDeposit(iPos1+1, iPos2+1) +    dRem1  *    dRem2  * aWeights(n);
                 end % for
                 aDeposit = aDeposit(1:end-1,1:end-1);
-                toc
 
             end % if
            

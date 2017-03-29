@@ -108,7 +108,7 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
 
     stData = oBeam.SlicedPhaseSpace('Dimension',sAxis,'Lim',[iMinZ iMaxZ], ...
                                     'Smooth',stOpt.Smooth,'MinStat',stOpt.MinStat, ...
-                                    'EmitTol',stOpt.EmitTol);
+                                    'EmitTol',stOpt.EmitTol,'ReturnInc','Yes');
     
     aEmitt = stData.ENorm;
     aExcl  = stData.Excluded;
@@ -117,6 +117,14 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     dEMax  = stData.ETolerance;
     dQTot  = stData.TotCharge;
     dQInc  = stData.TolCharge;
+    
+    % Momentum
+    
+    aInc   = stData.Included;
+    stMom  = oBeam.ScanMomentum(aInc);
+    
+    
+    % Scale Data
     
     dMMax  = max(abs(aMom));
     [dTemp,sMomUnit] = QPICTools.fAutoScale(dMMax,stData.MomUnit);
