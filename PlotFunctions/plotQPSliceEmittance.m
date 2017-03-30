@@ -36,9 +36,10 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     oOpt = inputParser;
     addParameter(oOpt, 'Scan',        5.0);
     addParameter(oOpt, 'EmitTol',     5.0);
+    addParameter(oOpt, 'MomTol',      3.0);
     addParameter(oOpt, 'Smooth',      4.0);
     addParameter(oOpt, 'MinStat',     100);
-    addParameter(oOpt, 'FigureSize',  [900 650]);
+    addParameter(oOpt, 'FigureSize',  [1600 600]);
     addParameter(oOpt, 'IsSubPlot',   'No');
     addParameter(oOpt, 'AutoResize',  'On');
     addParameter(oOpt, 'Absolute',    'Yes');
@@ -121,7 +122,18 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     % Momentum
     
     aInc   = stData.Included;
-    stMom  = oBeam.ScanMomentum(aInc);
+    stMom  = oBeam.ScanMomentum(aInc,'Resolution',1e6,'Tolerance',stOpt.MomTol);
+    
+    aPAxis = stMom.PValues; % Axis with momentum values
+    aGAxis = stMom.GValues; % Axis with gamma values
+    aQTot  = stMom.Charge;  % Charge per interval
+    
+    
+    % Make a historgam of the P distribution with the same limits for reference
+    aHLim  = [aGAxis(1) aGAxis(end)];
+    iHNum  = numel(aGAxis);
+    stHist = QPICProcess.fDeposit(aInc(:,4),ones(numel(aInc(:,4)),1),1,iHNum,aHLim);
+    aHist  = stHist.Deposit;
     
     
     % Scale Data
@@ -156,7 +168,7 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     
     % Density and Emittance Plot
     
-    subplot(4,1,1:3);
+    subplot(4,2,[1,3,5]);
 
     hold on;
 
@@ -196,7 +208,7 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
     
     % Forward Momentum Plot
     
-    subplot(4,1,4);
+    subplot(4,2,7);
     
     aCol = get(gca,'colororder');
 
@@ -212,5 +224,24 @@ function stReturn = plotQPSliceEmittance(oData, iTime, iBeam, sAxis, varargin)
 
     xlim([aAxis(1) aAxis(end)]);
     ylim([0.9*min(aMom(aMom > 0)) 1.1*max(aMom)]);
+    
+    % Momentum Histogram
+    
+    subplot(4,2,[2,4,6]);
+    
+    hold on;
+
+    yyaxis left;
+    plot(aPAxis,abs(aQTot)*1e12);
+    
+    ylabel(sprintf('{\\fontsize{15}\\int}_{\\fontsize{6}-%.1f%%}^{\\fontsize{6}+%.1f%%} Q dP [pC]',stOpt.MomTol,stOpt.MomTol));
+
+    yyaxis right;
+    stairs(aPAxis,aHist);
+    ylabel('N / \DeltaP');
+    
+    xlim([aPAxis(1) aPAxis(end)]);
+    
+    hold off;
 
 end % function

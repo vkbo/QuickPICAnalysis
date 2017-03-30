@@ -464,7 +464,7 @@ classdef QPICBeam < QPICType
             addParameter(oOpt, 'Dimension',  'x');
             addParameter(oOpt, 'Tolerance',  3.0);
             addParameter(oOpt, 'Resolution', 0.0);
-            addParameter(oOpt, 'MinStat',    100);
+            addParameter(oOpt, 'MinStat',    10);
             addParameter(oOpt, 'PruneTail',  100);
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
@@ -490,7 +490,7 @@ classdef QPICBeam < QPICType
             [iNR,~] = size(aRaw);
             
             % Variables
-            dMass = obj.BeamConf.Mass;
+            dMass = obj.BeamConf.Mass*obj.Data.Config.Constants.EV.ElectronMass;
             dSimQ = obj.BeamConf.SimCharge*double(obj.Data.Config.Diag.RAW.Sample);
             
             % Prepare Dataset
@@ -502,12 +502,12 @@ classdef QPICBeam < QPICType
             dPSpan = dPMax-dPMin;
 
             if stOpt.Resolution > 0.0
-                dRes = stOpt.Resolution;
+                dRes = sqrt(1+(stOpt.Resolution/dMass)^2);
             else
-                dRes = dPSpan/100;
+                dRes = dPSpan/1000;
             end % if
             
-            iNz = ceil(dPSpan/dRes);
+            iNz = ceil(dPSpan/dRes)
 
             aEx = zeros(iNz,1);
             aNP = zeros(iNz,1);
@@ -516,12 +516,12 @@ classdef QPICBeam < QPICType
             
             for s=1:iNz
                 
-                dLMin = dPMin + (s-1)*dRes;
-                dLMax = dPMin +  s   *dRes;
+                dLMin  = dPMin + (s-1)*dRes;
+                dLMax  = dPMin +  s   *dRes;
                 
                 aPS    = aPz;
-                aInd   = (aPS < dLMin | aPS > dLMax);
-                aPS(aInd) = [];
+                aPS(aPS < dLMin | aPS > dLMax) = [];
+
                 aNP(s) = numel(aPS);
                 aSP(s) = sqrt(std(aPS)^2 - 1)*dMass;
                 aMP(s) = sqrt(mean(aPS)^2 - 1)*dMass;
@@ -531,11 +531,118 @@ classdef QPICBeam < QPICType
                     continue;
                 end % if
                 
-                fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.2f pC, σP = %4.2f MeV/c [%5.3f %%]\n', ...
-                        dLMin,dLMax,aNP(s),aNP(s)*dSimQ*1e12,aSP(s),100*aSP(s)/aMP(s));
+                %fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.1f fC, σP = %4.2f MeV/c [%5.3f %%]\n', ...
+                %        dLMin,dLMax,aNP(s),aNP(s)*dSimQ*1e15,aSP(s),100*aSP(s)/aMP(s));
+
+            end % for
+            
+            % Find the peak charge index and select an interval
+            [~,iPeak] = max(aNP);
+            iMin = iPeak - 2;
+            iMax = iPeak + 2;
+            if iMin < 1
+                iMin = 1;
+            end % if
+            if iMax > iNz
+                iMax = iNz;
+            end % if
+            iNFit = iMax-iMin+1;
+            
+            % Interpolate with 10 times resolution
+            % If it fails, just use the previous peak value
+            try
+                dXMin  = dPMin + (iMin-0.5)*dRes;
+                dXMax  = dPMin + (iMax-0.5)*dRes;
+                aY     = aNP(iMin:iMax);
+                aX     = linspace(dXMin,dXMax,iNFit);
+                aXX    = linspace(dXMin,dXMax,10*iNFit);
+                aSpl   = spline(aX,aY,aXX);
+                [~,iP] = max(aSpl);
+                dPeak  = aXX(iP);
+            catch
+                fprintf(2,'Warning: Spline fit failed. Falling back to unfitted peak.\n');
+                dPeak  = dPMin + (iPeak-0.5)*dRes;
+            end % try
+
+            dPeak
+            
+            dPLow = (1-stOpt.Tolerance/100)*dPeak;
+            dPUpp = (1+stOpt.Tolerance/100)*dPeak;
+            
+            aPAcc = aPz;
+            aPAcc(aPAcc < dPLow | aPAcc > dPUpp) = [];
+            
+            dQAcc = numel(aPAcc)*dSimQ*1e12
+            
+            % Alternative method
+            aLim = zeros(iNz,3);
+            
+            for s=1:iNz
+                
+                dPVal  = dPMin + (s-0.5)*dRes;
+                dPLow  = (1-stOpt.Tolerance/100)*dPVal;
+                dPUpp  = (1+stOpt.Tolerance/100)*dPVal;
+                
+                aPS    = aPz;
+                aPS(aPS < dPLow | aPS > dPUpp) = [];
+
+                aNP(s) = numel(aPS);
+                if aNP(s) < stOpt.MinStat
+                    aEx(s) = 1;
+                    continue;
+                end % if
+                
+                aLim(s,:) = [dPVal dPLow dPUpp];
+                
+                
+                %fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.1f pC, Pz = %4.2f MeV/c\n', ...
+                %        dPLow,dPUpp,aNP(s),aNP(s)*dSimQ*1e12,sqrt(dPVal^2 - 1)*dMass*1e-6);
 
             end % for
 
+            stReturn.GValues    = aLim(:,1);
+            stReturn.GIntervals = aLim(:,2:3);
+            stReturn.PValues    = sqrt(aLim(:,1).^2 - 1)*dMass;
+            stReturn.PIntervals = sqrt(aLim(:,2:3).^2 - 1)*dMass;
+            stReturn.Count      = aNP;
+            stReturn.Charge     = aNP*dSimQ;
+
+        end % function
+        
+        function stReturn = Hist1D(obj, iAxis, varargin)
+        
+            % Input/Output
+            stReturn       = {};
+            stReturn.Error = '';
+
+            % Check that the object is initialised
+            if obj.fError
+                return;
+            end % if
+
+            oOpt = inputParser;
+            addParameter(oOpt, 'Lim',  []);
+            addParameter(oOpt, 'Grid', 100);
+            parse(oOpt, varargin{:});
+            stOpt = oOpt.Results;
+            
+            if iAxis < 1 || iAxis > 6
+                fprintf(2,'QPICBeam.Hist1D Error: Axis out of range.\n');
+                return;
+            end % if
+
+            aRaw = obj.Data.Data(obj.Time,'RAW','',obj.BeamVar,'');
+            if isempty(aRaw)
+                stReturn.Error = 'No initial data.';
+                return;
+            end % if
+            
+            aData  = aRaw(:,iAxis);
+            stData = QPICProcess.fDeposit(aData, ones(numel(aData),1), 1, stOpt.Grid, stOpt.Lim);
+            
+            % Return
+            stReturn.Data = stData.Deposit;
+            
         end % function
     
     end % methods

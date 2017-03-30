@@ -58,8 +58,14 @@ classdef QPICProcess
                     aLim(2*d-1) = min(aData(:,d));
                     aLim(2*d)   = max(aData(:,d));
                 end % for
+                aLim = reshape(aLim,2,iDim);
+            else % Prune dataset
+                aLim = reshape(aLim,2,iDim);
+                for d=1:iDim
+                    aData(aData(:,d) < aLim(1,d) | aData(:,d) > aLim(2,d),:) = [];
+                end % for
+                [iN,~] = size(aData);
             end % if
-            aLim  = reshape(aLim,2,iDim);
             aSpan = aLim(2,:)-aLim(1,:);
             aData = aData-aLim(1,:);
             
