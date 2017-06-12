@@ -421,6 +421,7 @@ classdef QPICBeam < QPICType
             stReturn.XPrimeUnit = 'mrad';
             stReturn.Momentum   = real(sqrt(aMom.^2 - 1))*dMass*dMe;
             stReturn.MeanMom    = sqrt(mean(aRaw(:,4))^2 - 1)*dMass*dMe;
+            stReturn.RMSMom     = sqrt(std(aRaw(:,4))^2 - 1)*dMass*dMe;
             stReturn.MomUnit    = 'eV/c';
             stReturn.Count      = aNP;
             stReturn.Excluded   = aEx;
@@ -428,6 +429,7 @@ classdef QPICBeam < QPICType
             stReturn.TotCharge  = iNR*dSimQ;
             stReturn.TolCharge  = sum(aCut)*dSimQ;
             stReturn.ChargeUnit = 'C';
+            stReturn.Resolution = dDz*dLFac;
             
             if strcmpi(stOpt.ReturnInc, 'Yes')
                 aInc  = aRaw(aCut,:);
@@ -444,7 +446,9 @@ classdef QPICBeam < QPICType
 
                 stReturn.Included = aInc;
                 stReturn.IncMom   = dMPz;
+                stReturn.IncRMS   = sqrt(std(aPz)^2-1)*dMass*dMe;
                 stReturn.IncEmit  = dEm*dMPz;
+
             end % if
 
         end % function
@@ -465,19 +469,10 @@ classdef QPICBeam < QPICType
             addParameter(oOpt, 'Tolerance',  3.0);
             addParameter(oOpt, 'Resolution', 0.0);
             addParameter(oOpt, 'MinStat',    10);
-            addParameter(oOpt, 'PruneTail',  100);
+            addParameter(oOpt, 'PruneTail',  1000);
             parse(oOpt, varargin{:});
             stOpt = oOpt.Results;
             
-            switch lower(stOpt.Dimension)
-                case 'x'
-                    iDim = 2;
-                case 'y'
-                    iDim = 3;
-                otherwise
-                    iDim = 2;
-            end % switch
-
             % If no data specified, load it
             if isempty(aRaw)
                 aRaw = obj.Data.Data(obj.Time,'RAW','',obj.BeamVar,'');
@@ -487,14 +482,14 @@ classdef QPICBeam < QPICType
                 stReturn.Error = 'No initial data.';
                 return;
             end % if
-            [iNR,~] = size(aRaw);
             
             % Variables
             dMass = obj.BeamConf.Mass*obj.Data.Config.Constants.EV.ElectronMass;
             dSimQ = obj.BeamConf.SimCharge*double(obj.Data.Config.Diag.RAW.Sample);
             
             % Prepare Dataset
-            aPz    = sort(aRaw(:,4));
+            aPz    = sqrt(aRaw(:,4).^2 - 1)*dMass;
+            aPz    = sort(aPz);
             aPz    = aPz(stOpt.PruneTail:end);
             
             dPMin  = min(aPz);
@@ -502,79 +497,16 @@ classdef QPICBeam < QPICType
             dPSpan = dPMax-dPMin;
 
             if stOpt.Resolution > 0.0
-                dRes = sqrt(1+(stOpt.Resolution/dMass)^2);
+                dRes = stOpt.Resolution;
             else
                 dRes = dPSpan/1000;
             end % if
             
-            iNz = ceil(dPSpan/dRes)
+            iNz = ceil(dPSpan/dRes);
 
-            aEx = zeros(iNz,1);
-            aNP = zeros(iNz,1);
-            aSP = zeros(iNz,1);
-            aMP = zeros(iNz,1);
-            
-            for s=1:iNz
-                
-                dLMin  = dPMin + (s-1)*dRes;
-                dLMax  = dPMin +  s   *dRes;
-                
-                aPS    = aPz;
-                aPS(aPS < dLMin | aPS > dLMax) = [];
-
-                aNP(s) = numel(aPS);
-                aSP(s) = sqrt(std(aPS)^2 - 1)*dMass;
-                aMP(s) = sqrt(mean(aPS)^2 - 1)*dMass;
-
-                if aNP(s) < stOpt.MinStat
-                    aEx(s) = 1;
-                    continue;
-                end % if
-                
-                %fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.1f fC, σP = %4.2f MeV/c [%5.3f %%]\n', ...
-                %        dLMin,dLMax,aNP(s),aNP(s)*dSimQ*1e15,aSP(s),100*aSP(s)/aMP(s));
-
-            end % for
-            
-            % Find the peak charge index and select an interval
-            [~,iPeak] = max(aNP);
-            iMin = iPeak - 2;
-            iMax = iPeak + 2;
-            if iMin < 1
-                iMin = 1;
-            end % if
-            if iMax > iNz
-                iMax = iNz;
-            end % if
-            iNFit = iMax-iMin+1;
-            
-            % Interpolate with 10 times resolution
-            % If it fails, just use the previous peak value
-            try
-                dXMin  = dPMin + (iMin-0.5)*dRes;
-                dXMax  = dPMin + (iMax-0.5)*dRes;
-                aY     = aNP(iMin:iMax);
-                aX     = linspace(dXMin,dXMax,iNFit);
-                aXX    = linspace(dXMin,dXMax,10*iNFit);
-                aSpl   = spline(aX,aY,aXX);
-                [~,iP] = max(aSpl);
-                dPeak  = aXX(iP);
-            catch
-                fprintf(2,'Warning: Spline fit failed. Falling back to unfitted peak.\n');
-                dPeak  = dPMin + (iPeak-0.5)*dRes;
-            end % try
-
-            dPeak
-            
-            dPLow = (1-stOpt.Tolerance/100)*dPeak;
-            dPUpp = (1+stOpt.Tolerance/100)*dPeak;
-            
-            aPAcc = aPz;
-            aPAcc(aPAcc < dPLow | aPAcc > dPUpp) = [];
-            
-            dQAcc = numel(aPAcc)*dSimQ*1e12
-            
             % Alternative method
+            aExc = zeros(iNz,1);
+            aNP  = zeros(iNz,1);
             aLim = zeros(iNz,3);
             
             for s=1:iNz
@@ -588,22 +520,20 @@ classdef QPICBeam < QPICType
 
                 aNP(s) = numel(aPS);
                 if aNP(s) < stOpt.MinStat
-                    aEx(s) = 1;
+                    aExc(s) = 1;
                     continue;
                 end % if
                 
                 aLim(s,:) = [dPVal dPLow dPUpp];
-                
-                
+
                 %fprintf('Scanning from %4.0f to %4.0f : N = %6d, Q = %6.1f pC, Pz = %4.2f MeV/c\n', ...
                 %        dPLow,dPUpp,aNP(s),aNP(s)*dSimQ*1e12,sqrt(dPVal^2 - 1)*dMass*1e-6);
 
             end % for
-
-            stReturn.GValues    = aLim(:,1);
-            stReturn.GIntervals = aLim(:,2:3);
-            stReturn.PValues    = sqrt(aLim(:,1).^2 - 1)*dMass;
-            stReturn.PIntervals = sqrt(aLim(:,2:3).^2 - 1)*dMass;
+            
+            stReturn.Particles  = aPz;
+            stReturn.PValues    = aLim(:,1);
+            stReturn.PIntervals = aLim(:,2:3);
             stReturn.Count      = aNP;
             stReturn.Charge     = aNP*dSimQ;
 
