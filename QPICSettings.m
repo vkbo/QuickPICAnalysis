@@ -20,12 +20,12 @@ sHost     = strtrim(sHost);
 % Rey
 if strcmpi(sHost,'Rey')
     stFolders.IntTSeries = struct('Path', '/scratch/QuickPICData/T-Series', 'Depth', 1, 'Name', 'Data: T-Series');
-    stFolders.IntQSeries = struct('Path', '/scratch/SimData/Q-Series',      'Depth', 1, 'Name', 'Data: Q-Series');
+    stFolders.IntQSeries = struct('Path', '/data/SimData/Q-Series',         'Depth', 1, 'Name', 'Data: Q-Series');
 end % if
 
 % Leela
 if strcmpi(sHost,'Leela')
-    stFolders.IntQSeries = struct('Path', '/data/SimData/Q-Series',         'Depth', 1, 'Name', 'Data: Q-Series');
+    stFolders.IntQSeries = struct('Path', '/scratch/SimData/Q-Series',         'Depth', 1, 'Name', 'Data: Q-Series');
 end % if
 
 % Xena

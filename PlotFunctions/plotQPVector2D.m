@@ -77,17 +77,33 @@ function stReturn = plotQPVector2D(oData, iTime, sVector, sSlice, varargin)
         fprintf(2, 'Error: Limits specified, but must be of dimension 4.\n');
         return;
     end % if
-    
+
+    [~,iDim,iOrth] = QPICTools.fCheckSlice(sSlice);
+    if iDim == 2
+        iSliceAxis = iOrth;
+    else
+        iSliceAxis = stOpt.SliceAxis;
+    end % if
+
     % Prepare Data
 
     oVec           = QPICVector(oData,sVector,'Units','SI','Scale','mm','Symmetric','Yes');
     oVec.Time      = iTime;
-    oVec.SliceAxis = stOpt.SliceAxis;
+    oVec.SliceAxis = iSliceAxis;
     oVec.Slice     = stOpt.Slice;
     
     if length(stOpt.Limits) == 4
-        oVec.X1Lim = stOpt.Limits(1:2);
-        oVec.X2Lim = stOpt.Limits(3:4);
+        switch iSliceAxis
+            case 1
+                oVec.X2Lim = stOpt.Limits(1:2);
+                oVec.X3Lim = stOpt.Limits(3:4);
+            case 2
+                oVec.X1Lim = stOpt.Limits(1:2);
+                oVec.X3Lim = stOpt.Limits(3:4);
+            case 3
+                oVec.X1Lim = stOpt.Limits(1:2);
+                oVec.X2Lim = stOpt.Limits(3:4);
+        end % switch
     end % if
     
     stData = oVec.Density2D(sSlice);

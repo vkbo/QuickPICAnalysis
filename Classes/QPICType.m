@@ -437,9 +437,9 @@ classdef QPICType
             iDim       = ndims(aData);
             iSliceAxis = obj.SliceAxis;
 
-            if iDim == 2
-                return;
-            end % if
+            %if iDim == 2
+            %    return;
+            %end % if
 
             switch iSliceAxis
                 case 1

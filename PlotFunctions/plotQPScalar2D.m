@@ -81,16 +81,32 @@ function stReturn = plotQPScalar2D(oData, iTime, sScalar, sSlice, varargin)
         return;
     end % if
     
+    [~,iDim,iOrth] = QPICTools.fCheckSlice(sSlice);
+    if iDim == 2
+        iSliceAxis = iOrth;
+    else
+        iSliceAxis = stOpt.SliceAxis;
+    end % if
+    
     % Prepare Data
 
     oSca           = QPICScalar(oData,sScalar,'Units','SI','Scale','mm','Symmetric','Yes');
     oSca.Time      = iTime;
-    oSca.SliceAxis = stOpt.SliceAxis;
+    oSca.SliceAxis = iSliceAxis;
     oSca.Slice     = stOpt.Slice;
     
     if length(stOpt.Limits) == 4
-        oSca.X1Lim = stOpt.Limits(1:2);
-        oSca.X2Lim = stOpt.Limits(3:4);
+        switch iSliceAxis
+            case 1
+                oSca.X2Lim = stOpt.Limits(1:2);
+                oSca.X3Lim = stOpt.Limits(3:4);
+            case 2
+                oSca.X1Lim = stOpt.Limits(1:2);
+                oSca.X3Lim = stOpt.Limits(3:4);
+            case 3
+                oSca.X1Lim = stOpt.Limits(1:2);
+                oSca.X2Lim = stOpt.Limits(3:4);
+        end % switch
     end % if
     
     stData = oSca.Density2D(sSlice);

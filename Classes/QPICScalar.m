@@ -158,18 +158,12 @@ classdef QPICScalar < QPICType
                 return;
             end % if
             
-            % If data is 3D, slice it
-            if ndims(aData) == 3
-                stData = obj.fParseGridData2D(aData);
-                aData  = stData.Data;
-                aHAxis = stData.HAxis;
-                aVAxis = stData.VAxis;
-                cAxes  = stData.Axes;
-            else
-                cAxes  = obj.fSliceOrientation(sSlice);
-                aHAxis = obj.fGetBoxAxis(cAxes{1});
-                aVAxis = obj.fGetBoxAxis(cAxes{2});
-            end % if
+            % Slice and crop
+            stData = obj.fParseGridData2D(aData);
+            aData  = stData.Data;
+            aHAxis = stData.HAxis;
+            aVAxis = stData.VAxis;
+            cAxes  = stData.Axes;
             
             % Return Data
             stReturn.Data  = aData*obj.ScalarFac;
