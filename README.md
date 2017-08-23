@@ -12,6 +12,8 @@ University of Oslo
 
 Derived from code from the [OsirisAnalysis](https://github.com/Jadzia626/OsirisAnalysis) project.
 
+This analsysis package is no longer under active development as I no longer work with these type of simulations on a regular basis.
+
 ## Usage
 
 As OsirisAnalysis, QPICAnalysis is layered. The core classes simply wrap the dataset and inputfile. The second layer contains data processing classes which does unit conversion and statistics, and the third layer is a set of standard plot functions that build on the previous two.

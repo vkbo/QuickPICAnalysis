@@ -1,6 +1,6 @@
 # QuickPIC Analysis Toolbox
 MATLAB package for analysing QuickPIC data<br>
-Current version: Dev0.3
+Current version: 0.3
 
 **Developed by:**<br>
 Veronica K. Berglyd Olsen<br>
@@ -10,7 +10,11 @@ University of Oslo
 ## Development History
 
 ### Version 0.3
-_Under Development_
+_Released 23.08.2017_
+
+* Added QPICProcess class that is a static class currently containing a grid deposit function to create 1D and 2D histograms for raw particles (or any other data)
+* Added slice emittance plot / GUI tool. It shows the slice-wise emittance of a beam. Calculation function added to the QPICBeam class.
+* Fixed bugs in QPICType for extracting slices and lineouts from 2D and 3D data.
 
 ### Version 0.2
 _Released 23.03.2017_
