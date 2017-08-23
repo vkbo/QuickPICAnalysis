@@ -23,11 +23,11 @@ classdef QPICProcess
                 fprintf('\n');
                 fprintf('  Inputs:\n');
                 fprintf(' =========\n');
-                fprintf('  aData    :: Coordinates, one column for each dimension.\n');
+                fprintf('  aData    :: Data coordinates, one column for each dimension.\n');
                 fprintf('  aWeights :: One column of weights.\n');
                 fprintf('  iOrder   :: Interpolation order. 0 or 1.\n');
-                fprintf('  aGrid    :: Vector o resolution, one for each dimension.\n');
-                fprintf('  aLim     :: Limits. If lef out, uses min and max.\n');
+                fprintf('  aGrid    :: Vector of resolution (bins), one for each dimension.\n');
+                fprintf('  aLim     :: Limits. If left out, uses min and max of each data vector.\n');
                 fprintf('\n');
                 return;
             end % if

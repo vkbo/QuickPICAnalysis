@@ -446,7 +446,7 @@ classdef QPICBeam < QPICType
 
                 stReturn.Included = aInc;
                 stReturn.IncMom   = dMPz;
-                stReturn.IncRMS   = sqrt(std(aPz)^2-1)*dMass*dMe;
+                stReturn.IncRMS   = std(aPz)*dMass*dMe;
                 stReturn.IncEmit  = dEm*dMPz;
 
             end % if

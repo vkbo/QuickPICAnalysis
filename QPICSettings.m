@@ -17,8 +17,8 @@ sLocalTemp = '/home/vkbo/Temp';
 [~,sHost] = system('hostname');
 sHost     = strtrim(sHost);
 
-% Rey
-if strcmpi(sHost,'Rey')
+% Trinity
+if strcmpi(sHost,'Trinity')
     stFolders.IntTSeries = struct('Path', '/scratch/QuickPICData/T-Series', 'Depth', 1, 'Name', 'Data: T-Series');
     stFolders.IntQSeries = struct('Path', '/data/SimData/Q-Series',         'Depth', 1, 'Name', 'Data: Q-Series');
 end % if
