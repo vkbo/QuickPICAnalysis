@@ -394,7 +394,7 @@ classdef QPICBeam < QPICType
                 aX    = aRawT(:,iDim)*obj.AxisFac(iDim);
                 aX    = aX-mean(aX);
 
-                aXP   = tan(aPx./aPz)*1e3;
+                aXP   = atan(aPx./aPz)*1e3;
                 aCov  = cov(aX, aXP);
                 dMPz  = mean(aPz);
                 dEm   = real(sqrt(det(aCov)));
@@ -439,7 +439,7 @@ classdef QPICBeam < QPICType
                 aX    = aInc(:,iDim)*obj.AxisFac(iDim);
                 aX    = aX-mean(aX);
 
-                aXP   = tan(aPx./aPz)*1e3;
+                aXP   = atan(aPx./aPz)*1e3;
                 aCov  = cov(aX, aXP);
                 dMPz  = mean(aPz);
                 dEm   = real(sqrt(det(aCov)));
