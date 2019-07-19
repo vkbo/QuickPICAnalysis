@@ -209,7 +209,7 @@ classdef QPICBeam < QPICType
             aX      = aRaw(:,iDim)*obj.AxisFac(iDim);
             aX      = aX-mean(aX);
 
-            aXP     = tan(aPx./aPz)*1e3;
+            aXP     = atan(aPx./aPz)*1e3;
             aCov    = cov(aX, aXP);
             dGamma  = mean(aPz);
             dERMS   = sqrt(det(aCov));
@@ -232,9 +232,9 @@ classdef QPICBeam < QPICType
             stReturn.Charge     = length(aX)*obj.BeamFac*obj.BeamConf.SimCharge;
 
             % Twiss parameters
-            stReturn.Alpha      = aCov(1,2)/dERMS;
-            stReturn.Beta       = aCov(1,1)/dERMS;
-            stReturn.Gamma      = aCov(2,2)/dERMS;
+            stReturn.Alpha      = -aCov(1,2)/dERMS;
+            stReturn.Beta       =  aCov(1,1)/dERMS;
+            stReturn.Gamma      =  aCov(2,2)/dERMS;
 
             if strcmpi(stOpt.Histogram, 'No')
                 return;
